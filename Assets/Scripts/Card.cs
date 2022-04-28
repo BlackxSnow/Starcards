@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using Interfaces;
+using Systems;
+using TMPro;
 
 [RequireComponent(typeof(Draggable), typeof(VelocityMove))]
 public class Card : MonoBehaviour
@@ -33,8 +35,20 @@ public class Card : MonoBehaviour
 
     private bool _IsDraggable = true;
 
-    private Card _StackedOn = null;
-    private Card _StackedChild = null;
+    public Card StackedOn { get; protected set; } = null;
+    public Card StackedChild { get; protected set; } = null;
+
+    public string CardName { get => Data.Name; }
+
+    public CardData Data { get; protected set; }
+
+    [SerializeField]
+    private GameObject _ProgressBar;
+    [SerializeField]
+    private Transform _ProgressBarContainer;
+
+    [SerializeField]
+    private TextMeshProUGUI NameText;
 
     private void Awake()
     {
@@ -48,7 +62,20 @@ public class Card : MonoBehaviour
         _Draggable.OnEndDrag += OnDrop;
     }
 
+    public void Initialise(CardData data)
+    {
+        Data = data;
+        NameText.text = Data.Name;
+    }
 
+    /// <summary>
+    /// Return a progress bar attached to this card.
+    /// </summary>
+    /// <returns></returns>
+    public UI.ProgressBar RequestProgressBar()
+    {
+        return Instantiate(_ProgressBar, _ProgressBarContainer).GetComponent<UI.ProgressBar>();
+    }
 
     public void SetDraggable(bool isDraggable)
     {
@@ -61,8 +88,8 @@ public class Card : MonoBehaviour
     /// </summary>
     public void UnstackChild()
     {
-        if (_StackedChild == null) Debug.LogWarning("UnstackChild called with no existing child.");
-        _StackedChild = null;
+        if (StackedChild == null) Debug.LogWarning("UnstackChild called with no existing child.");
+        StackedChild = null;
     }
 
     /// <summary>
@@ -72,9 +99,9 @@ public class Card : MonoBehaviour
     /// <returns></returns>
     public bool TryStackChild(Card toStack)
     {
-        if (_StackedChild != null) return false;
+        if (StackedChild != null) return false;
 
-        _StackedChild = toStack;
+        StackedChild = toStack;
         return true;
     }
 
@@ -125,9 +152,9 @@ public class Card : MonoBehaviour
     /// </summary>
     private void MoveToStackedCard()
     {
-        Debug.Assert(_StackedOn, "MoveToStackedCard cannot be called with a null parent.");
+        Debug.Assert(StackedOn, "MoveToStackedCard cannot be called with a null parent.");
         _VelocityMove.IsStacking = true;
-        _VelocityMove.TargetPosition = new Vector3(_StackedOn.transform.position.x, _StackedOn.transform.position.y - StackYOffset, _StackedOn.transform.position.z - StackZOffset);
+        _VelocityMove.TargetPosition = new Vector3(StackedOn.transform.position.x, StackedOn.transform.position.y - StackYOffset, StackedOn.transform.position.z - StackZOffset);
     }
 
     /// <summary>
@@ -136,8 +163,8 @@ public class Card : MonoBehaviour
     /// <param name="other"></param>
     public void StackOn(Card other)
     {
-        _StackedOn?.UnstackChild();
-        _StackedOn = other;
+        StackedOn?.UnstackChild();
+        StackedOn = other;
 
         if (other != null)
         {
@@ -156,8 +183,8 @@ public class Card : MonoBehaviour
     {
         if (other.TryStackChild(this))
         {
-            _StackedOn?.UnstackChild();
-            _StackedOn = other;
+            StackedOn?.UnstackChild();
+            StackedOn = other;
             transform.SetParent(other.transform);
             MoveToStackedCard();
             return true;
@@ -172,8 +199,8 @@ public class Card : MonoBehaviour
     {
         _VelocityMove.IsStacking = false;
         _VelocityMove.ResetFinished();
-        _StackedOn?.UnstackChild();
-        _StackedOn = null;
+        StackedOn?.UnstackChild();
+        StackedOn = null;
         transform.SetParent(GameManager.CardContainer);
     }
 }

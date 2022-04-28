@@ -1,0 +1,20 @@
+{
+    "Name": "Producer 1",
+    "ImageFilePath": "Producer1.png",
+    "Interactions":
+    [
+        {
+            "InteractionType": "Interactions.Produce, StarCardsCore",
+            "Data": {
+                "$type": "ProduceData, StarCardsCore",
+                "CardName": "Worker 1",
+                "Quantity": 1
+            },
+            "Output": {
+                "CardName": "Resource 1",
+                "Quantity": 1
+            },
+            "Duration": 5.0
+        }
+    ]
+}

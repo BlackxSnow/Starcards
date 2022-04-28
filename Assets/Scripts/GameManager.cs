@@ -2,29 +2,37 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GameManager : MonoBehaviour
+namespace Systems
 {
-    public static GameManager instance;
-
-    public static Transform CardContainer { get; private set; }
-    [SerializeField]
-    private Transform _CardContainer;
-
-    private void Awake()
+    public class GameManager : MonoBehaviour
     {
-        if (instance == null)
+        public static GameManager instance;
+
+        public static Transform CardContainer { get; private set; }
+        [SerializeField]
+        private Transform _CardContainer;
+
+        [Header("Prefabs")]
+        public GameObject CardPrefab;
+
+        private void Awake()
         {
-            instance = this;
-        }
-        else
-        {
-            Debug.LogWarning($"A second game manager was created while one was already registered on {gameObject.name}");
-            Destroy(this);
+            if (instance == null)
+            {
+                instance = this;
+            }
+            else
+            {
+                Debug.LogWarning($"A second game manager was created while one was already registered on {gameObject.name}");
+                Destroy(this);
+            }
+
+            if (_CardContainer == null) throw new System.NullReferenceException("_CardContainer is null. Set from inspector.");
+            CardContainer = _CardContainer;
+
+            DataManager.LoadCards();
         }
 
-        if (_CardContainer == null) throw new System.NullReferenceException("_CardContainer is null. Set from inspector.");
-        CardContainer = _CardContainer;
+
     }
-
-
 }

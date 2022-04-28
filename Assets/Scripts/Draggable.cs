@@ -19,8 +19,6 @@ public class Draggable : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
     private bool _IsDragging = false;
 
-    private Vector2 _LastMousePos;
-
     private (Ray ray, float distance) RaycastBoard(Vector3 origin)
     {
         Ray ray = Camera.main.ScreenPointToRay(origin);
