@@ -35,21 +35,18 @@ public class Draggable : MonoBehaviour, IDragHandler, IPointerDownHandler, IPoin
         (Ray ray, float distance) = RaycastBoard(eventData);
         Vector3 hitPos = PosFromRayAndDistance(ray, distance);
         transform.position = new Vector3(hitPos.x - _CursorOffset.x, hitPos.y - _CursorOffset.y, transform.position.z);
-        OnStartDrag?.Invoke();
     }
 
     public void OnPointerDown(PointerEventData eventData)
     {
         (Ray ray, float distance) = RaycastBoard(eventData);
         Vector3 hitPos = PosFromRayAndDistance(ray, distance);
+        OnStartDrag?.Invoke();
         _CursorOffset = new Vector2(hitPos.x - transform.position.x, hitPos.y - transform.position.y);
-
-        transform.Translate(0, 0, -0.5f);
     }
 
     public void OnPointerUp(PointerEventData eventData)
     {
-        transform.Translate(0, 0, 0.5f);
         OnEndDrag?.Invoke();
     }
 }
