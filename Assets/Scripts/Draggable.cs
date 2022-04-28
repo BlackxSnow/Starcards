@@ -1,10 +1,12 @@
+using Interfaces;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 
-public class Draggable : MonoBehaviour, IDragHandler, IPointerDownHandler, IPointerUpHandler
+public class Draggable : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 {
     public static readonly Plane Board = new Plane(Vector3.back, 0);
 
@@ -13,9 +15,15 @@ public class Draggable : MonoBehaviour, IDragHandler, IPointerDownHandler, IPoin
 
     private Vector2 _CursorOffset;
 
-    private (Ray ray, float distance) RaycastBoard(PointerEventData data)
+    public IDirectable Directable;
+
+    private bool _IsDragging = false;
+
+    private Vector2 _LastMousePos;
+
+    private (Ray ray, float distance) RaycastBoard(Vector3 origin)
     {
-        Ray ray = Camera.main.ScreenPointToRay(data.position);
+        Ray ray = Camera.main.ScreenPointToRay(origin);
         bool isIntersecting = Board.Raycast(ray, out float distance);
 
         if (!isIntersecting)
@@ -30,23 +38,72 @@ public class Draggable : MonoBehaviour, IDragHandler, IPointerDownHandler, IPoin
         return Camera.main.transform.position + (ray.direction * distance);
     }
 
-    public void OnDrag(PointerEventData eventData)
+    private void MoveTo(Vector3 pos)
     {
-        (Ray ray, float distance) = RaycastBoard(eventData);
-        Vector3 hitPos = PosFromRayAndDistance(ray, distance);
-        transform.position = new Vector3(hitPos.x - _CursorOffset.x, hitPos.y - _CursorOffset.y, transform.position.z);
+        if (Directable != null)
+        {
+            Directable.TargetPosition = pos;
+        }
+        else
+        {
+            transform.position = pos;
+        }
+    }
+
+    private Vector3 GetCurrentPos()
+    {
+        if (Directable != null)
+        {
+            return Directable.TargetPosition;
+        }
+        else
+        {
+            return transform.position;
+        }
+    }
+
+    //public void OnDrag(PointerEventData eventData)
+    //{
+    //    (Ray ray, float distance) = RaycastBoard(eventData);
+    //    Vector3 hitPos = PosFromRayAndDistance(ray, distance);
+    //    Vector3 currentPos = GetCurrentPos();
+    //    MoveTo(new Vector3(hitPos.x - _CursorOffset.x, hitPos.y - _CursorOffset.y, currentPos.z));
+    //}
+
+    //public void OnPointerMove(PointerEventData eventData)
+    //{
+    //    if (_IsDragging)
+    //    {
+    //        (Ray ray, float distance) = RaycastBoard(eventData);
+    //        Vector3 hitPos = PosFromRayAndDistance(ray, distance);
+    //        Vector3 currentPos = GetCurrentPos();
+    //        MoveTo(new Vector3(hitPos.x - _CursorOffset.x, hitPos.y - _CursorOffset.y, currentPos.z));
+    //    }
+    //}
+
+    private void Update()
+    {
+        if (_IsDragging)
+        {
+            (Ray ray, float distance) = RaycastBoard(Mouse.current.position.ReadValue());
+            Vector3 hitPos = PosFromRayAndDistance(ray, distance);
+            Vector3 currentPos = GetCurrentPos();
+            MoveTo(new Vector3(hitPos.x - _CursorOffset.x, hitPos.y - _CursorOffset.y, currentPos.z));
+        }
     }
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        (Ray ray, float distance) = RaycastBoard(eventData);
+        (Ray ray, float distance) = RaycastBoard(eventData.position);
         Vector3 hitPos = PosFromRayAndDistance(ray, distance);
+        _IsDragging = true;
         OnStartDrag?.Invoke();
         _CursorOffset = new Vector2(hitPos.x - transform.position.x, hitPos.y - transform.position.y);
     }
 
     public void OnPointerUp(PointerEventData eventData)
     {
+        _IsDragging = false;
         OnEndDrag?.Invoke();
     }
 }

@@ -2,8 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Interfaces;
 
-[RequireComponent(typeof(Draggable))]
+[RequireComponent(typeof(Draggable), typeof(VelocityMove))]
 public class Card : MonoBehaviour
 {
     #region CardLayoutVars
@@ -28,6 +29,7 @@ public class Card : MonoBehaviour
     #endregion
 
     private Draggable _Draggable;
+    private VelocityMove _VelocityMove;
 
     private bool _IsDraggable = true;
 
@@ -37,19 +39,22 @@ public class Card : MonoBehaviour
     private void Awake()
     {
         _Draggable = GetComponent<Draggable>();
+        _VelocityMove = GetComponent<VelocityMove>();
 
+        _Draggable.Directable = _VelocityMove;
         _Draggable.enabled = _IsDraggable;
+        
         _Draggable.OnStartDrag += OnPickup;
         _Draggable.OnEndDrag += OnDrop;
     }
+
+
 
     public void SetDraggable(bool isDraggable)
     {
         _IsDraggable = isDraggable;
         _Draggable.enabled = _IsDraggable;
     }
-
-
 
     /// <summary>
     /// Remove the currently stacked child.
@@ -79,7 +84,7 @@ public class Card : MonoBehaviour
     /// <returns></returns>
     private Card CheckForStackUnderCard()
     {
-        Ray ray = new Ray(transform.position, Vector3.forward);
+        Ray ray = new Ray(new Vector3(_VelocityMove.TargetPosition.x, _VelocityMove.TargetPosition.y, transform.position.z), Vector3.forward);
         if (Physics.Raycast(ray, out RaycastHit hit))
         {
             if (hit.collider.transform.parent && hit.collider.transform.parent.TryGetComponent(out Card otherCard))
@@ -96,7 +101,7 @@ public class Card : MonoBehaviour
     private void OnPickup()
     {
         Unstack();
-        transform.position = new Vector3(transform.position.x, transform.position.y, -DefaultZ - PickupHeight);
+        _VelocityMove.TargetPosition = new Vector3(transform.position.x, transform.position.y, -DefaultZ - PickupHeight);
     }
 
     /// <summary>
@@ -111,7 +116,7 @@ public class Card : MonoBehaviour
         }
         else
         {
-            transform.position = new Vector3(transform.position.x, transform.position.y, -DefaultZ);
+            _VelocityMove.TargetPosition = new Vector3(_VelocityMove.TargetPosition.x, _VelocityMove.TargetPosition.y, -DefaultZ);
         }
     }
 
@@ -121,7 +126,8 @@ public class Card : MonoBehaviour
     private void MoveToStackedCard()
     {
         Debug.Assert(_StackedOn, "MoveToStackedCard cannot be called with a null parent.");
-        transform.position = new Vector3(_StackedOn.transform.position.x, _StackedOn.transform.position.y - StackYOffset, _StackedOn.transform.position.z - StackZOffset);
+        _VelocityMove.IsStacking = true;
+        _VelocityMove.TargetPosition = new Vector3(_StackedOn.transform.position.x, _StackedOn.transform.position.y - StackYOffset, _StackedOn.transform.position.z - StackZOffset);
     }
 
     /// <summary>
@@ -164,6 +170,8 @@ public class Card : MonoBehaviour
     /// </summary>
     public void Unstack()
     {
+        _VelocityMove.IsStacking = false;
+        _VelocityMove.ResetFinished();
         _StackedOn?.UnstackChild();
         _StackedOn = null;
         transform.SetParent(GameManager.CardContainer);
