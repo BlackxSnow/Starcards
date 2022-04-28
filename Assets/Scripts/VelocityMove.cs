@@ -61,12 +61,19 @@ public class VelocityMove : MonoBehaviour, IDirectable
         MoveTowardsTarget();
     }
 
+    /// <summary>
+    /// Resets the 'finished' states, allowing the card to move again.
+    /// </summary>
     public void ResetFinished()
     {
         IsPlanarFinished = false;
         IsVerticalFinished = false;
     }
 
+    /// <summary>
+    /// Calculate and set the planar velocity for the object based on the target position.
+    /// </summary>
+    /// <param name="displacement"></param>
     private void CalculatePlanarVelocity(Vector3 displacement)
     {
         if (IsPlanarFinished) return;
@@ -95,6 +102,10 @@ public class VelocityMove : MonoBehaviour, IDirectable
         }
     }
 
+    /// <summary>
+    /// Calculate and set the vertical velocity for the object based on the target position.
+    /// </summary>
+    /// <param name="displacement"></param>
     private void CalculateVerticalVelocity(Vector3 displacement)
     {
         if (IsVerticalFinished) return;

@@ -62,25 +62,6 @@ public class Draggable : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         }
     }
 
-    //public void OnDrag(PointerEventData eventData)
-    //{
-    //    (Ray ray, float distance) = RaycastBoard(eventData);
-    //    Vector3 hitPos = PosFromRayAndDistance(ray, distance);
-    //    Vector3 currentPos = GetCurrentPos();
-    //    MoveTo(new Vector3(hitPos.x - _CursorOffset.x, hitPos.y - _CursorOffset.y, currentPos.z));
-    //}
-
-    //public void OnPointerMove(PointerEventData eventData)
-    //{
-    //    if (_IsDragging)
-    //    {
-    //        (Ray ray, float distance) = RaycastBoard(eventData);
-    //        Vector3 hitPos = PosFromRayAndDistance(ray, distance);
-    //        Vector3 currentPos = GetCurrentPos();
-    //        MoveTo(new Vector3(hitPos.x - _CursorOffset.x, hitPos.y - _CursorOffset.y, currentPos.z));
-    //    }
-    //}
-
     private void Update()
     {
         if (_IsDragging)
