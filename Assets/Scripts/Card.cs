@@ -26,25 +26,11 @@ public class Card : MonoBehaviour, IDragHandler, IPointerDownHandler, IPointerUp
         return Camera.main.transform.position + (ray.direction * distance);
     }
 
-    public void OnBeginDrag(PointerEventData eventData)
-    {
-        (Ray ray, float distance) = RaycastBoard(eventData);
-        Vector3 hitPos = PosFromRayAndDistance(ray, distance);
-        _CursorOffset = new Vector2(hitPos.x - transform.position.x, hitPos.y - transform.position.y);
-
-        transform.Translate(0, 0, -0.5f);
-    }
-
     public void OnDrag(PointerEventData eventData)
     {
         (Ray ray, float distance) = RaycastBoard(eventData);
         Vector3 hitPos = PosFromRayAndDistance(ray, distance);
-        transform.position = new Vector3(hitPos.x, hitPos.y, transform.position.z);
-    }
-
-    public void OnEndDrag(PointerEventData eventData)
-    {
-        transform.Translate(0, 0, 0.5f);
+        transform.position = new Vector3(hitPos.x - _CursorOffset.x, hitPos.y - _CursorOffset.y, transform.position.z);
     }
 
     public void OnPointerDown(PointerEventData eventData)
