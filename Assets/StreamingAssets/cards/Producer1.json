@@ -1,20 +1,11 @@
-{
-    "Name": "Producer 1",
-    "ImageFilePath": "Producer1.png",
-    "Interactions":
-    [
+[{ "Producer 1": {
+    "Image": "Producer1.png",
+
+    "OnStack": [
         {
-            "InteractionType": "Interactions.Produce, StarCardsCore",
-            "Data": {
-                "$type": "ProduceData, StarCardsCore",
-                "CardName": "Worker 1",
-                "Quantity": 1
-            },
-            "Output": {
-                "CardName": "Resource 1",
-                "Quantity": 1
-            },
-            "Duration": 5.0
+            "Require": [ "Worker 1" ],
+            "Create": [ { "Resource 1" : { "Quantity": 2 }} ],
+            "Duration": 2.5
         }
     ]
-}
+}}]

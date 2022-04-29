@@ -1,5 +1,4 @@
-{
-    "Name": "Worker 1",
-    "ImageFilePath": "Worker1.png",
+[{ "Worker 1": {
+    "Image": "Worker1.png",
     "Interactions": []
-}
+}}]

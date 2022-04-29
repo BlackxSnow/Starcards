@@ -3,8 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using System.Runtime.Serialization;
+using Systems;
 
-namespace Systems
+namespace Data
 {
     public class DataManager
     {
@@ -13,20 +15,14 @@ namespace Systems
             string cardPath = Application.streamingAssetsPath + "/cards/";
             Directory.CreateDirectory(cardPath);
 
-            //using (StreamWriter writer = new StreamWriter(cardPath + "test.json"))
-            //{
-            //    writer.Write(JsonConvert.SerializeObject(
-            //        new InteractionMetadata(typeof(uint), 
-            //            new ProduceData(new CardRef("card1", 1), new CardRef("outputCard", 2), 5.0f)), 
-            //        Formatting.Indented, new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.All }));
-            //};
+            StreamingContext context = new StreamingContext(StreamingContextStates.File, new CardDataContext(cardPath));
 
-            CardData data = JsonConvert.DeserializeObject<CardData>(File.ReadAllText(cardPath + "Producer1.json"), new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.Auto });
-            CardManager.Cards.Add(data.Name, data);
-            data = JsonConvert.DeserializeObject<CardData>(File.ReadAllText(cardPath + "Worker1.json"), new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.Auto });
-            CardManager.Cards.Add(data.Name, data);
-            data = JsonConvert.DeserializeObject<CardData>(File.ReadAllText(cardPath + "Resource1.json"), new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.Auto });
-            CardManager.Cards.Add(data.Name, data);
+            CardData[] data = JsonConvert.DeserializeObject<CardData[]>(File.ReadAllText(cardPath + "Producer1.json"), new JsonSerializerSettings() { Context = context });
+            CardManager.LoadedCards.Add(data[0].Name, data[0]);
+            data = JsonConvert.DeserializeObject<CardData[]>(File.ReadAllText(cardPath + "Worker1.json"), new JsonSerializerSettings() { Context = context });
+            CardManager.LoadedCards.Add(data[0].Name, data[0]);
+            data = JsonConvert.DeserializeObject<CardData[]>(File.ReadAllText(cardPath + "Resource1.json"), new JsonSerializerSettings() { Context = context });
+            CardManager.LoadedCards.Add(data[0].Name, data[0]);
 
             CardManager.SpawnCard("Producer 1");
             CardManager.SpawnCard("Worker 1");

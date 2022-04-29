@@ -5,6 +5,10 @@ using UnityEngine.EventSystems;
 using Interfaces;
 using Systems;
 using TMPro;
+using UnityEngine.UI;
+using Data;
+using Interactions;
+using System;
 
 [RequireComponent(typeof(Draggable), typeof(VelocityMove))]
 public class Card : MonoBehaviour
@@ -32,11 +36,17 @@ public class Card : MonoBehaviour
 
     private Draggable _Draggable;
     private VelocityMove _VelocityMove;
+    private Interactor _Interactor;
 
     private bool _IsDraggable = true;
 
     public Card StackedOn { get; protected set; } = null;
     public Card StackedChild { get; protected set; } = null;
+
+    /// <summary>
+    /// Called on stacking or unstacking of this card or one of its parents.
+    /// </summary>
+    public event Action<Card> OnStackStateChange;
 
     public string CardName { get => Data.Name; }
 
@@ -49,6 +59,9 @@ public class Card : MonoBehaviour
 
     [SerializeField]
     private TextMeshProUGUI NameText;
+
+    [SerializeField]
+    private RawImage CardImage;
 
     private void Awake()
     {
@@ -66,6 +79,8 @@ public class Card : MonoBehaviour
     {
         Data = data;
         NameText.text = Data.Name;
+        CardImage.texture = Data.Image;
+        _Interactor = new Interactor(this);
     }
 
     /// <summary>
@@ -83,26 +98,81 @@ public class Card : MonoBehaviour
         _Draggable.enabled = _IsDraggable;
     }
 
-    /// <summary>
-    /// Remove the currently stacked child.
-    /// </summary>
-    public void UnstackChild()
+    public void SpawnCard(string cardName, Vector3 position = default)
     {
-        if (StackedChild == null) Debug.LogWarning("UnstackChild called with no existing child.");
-        StackedChild = null;
+        Card card = CardManager.SpawnCard(cardName);
+        // TODO: Implement output waypoints
+        card.transform.position = position;
+        card._VelocityMove.TargetPosition = transform.position + new Vector3(1f, 0, 0);
     }
 
     /// <summary>
-    /// Attempt to stack a child on this card. Return whether successful.
+    /// Return whether this card's child list contains an amount of a certain card.
     /// </summary>
-    /// <param name="toStack"></param>
+    /// <param name="cardName"></param>
+    /// <param name="quantity"></param>
     /// <returns></returns>
-    public bool TryStackChild(Card toStack)
+    public bool HasStackedCards(string cardName, int quantity)
     {
-        if (StackedChild != null) return false;
+        Card current = this;
+        while (current.StackedChild != null)
+        {
+            current = current.StackedChild;
+            if (current.Data.Name == cardName)
+            {
+                quantity--;
+                if (quantity <= 0) return true;
+            }
+        }
 
-        StackedChild = toStack;
-        return true;
+        return false;
+    }
+    
+    /// <summary>
+    /// Appends the found cards to the provided list.
+    /// </summary>
+    /// <param name="cardName"></param>
+    /// <param name="quantity"></param>
+    /// <param name="cards"></param>
+    /// <returns></returns>
+    public bool HasStackedCards(string cardName, int quantity, ref List<Card> cards)
+    {
+        if (cards == null)
+        {
+            cards = new List<Card>();
+        }
+
+        Card current = this;
+        while (current.StackedChild != null)
+        {
+            current = current.StackedChild;
+            if (current.Data.Name == cardName)
+            {
+                cards.Add(current);
+                quantity--;
+                if (quantity <= 0) return true;
+            }
+        }
+        return false;
+    }
+    
+    /// <summary>
+    /// Returns whether this card is below 'parent' in its stack.
+    /// </summary>
+    /// <param name="parent"></param>
+    /// <returns></returns>
+    public bool HasParent(Card parent)
+    {
+        Card current = this;
+        while (current.StackedOn != null)
+        {
+            current = current.StackedOn;
+            if (current == parent)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     /// <summary>
@@ -158,6 +228,30 @@ public class Card : MonoBehaviour
     }
 
     /// <summary>
+    /// Remove the currently stacked child.
+    /// </summary>
+    public void UnstackChild()
+    {
+        if (StackedChild == null) Debug.LogWarning("UnstackChild called with no existing child.");
+        StackedChild = null;
+        OnStackStateChange?.Invoke(this);
+    }
+
+    /// <summary>
+    /// Attempt to stack a child on this card. Return whether successful.
+    /// </summary>
+    /// <param name="toStack"></param>
+    /// <returns></returns>
+    public bool TryStackChild(Card toStack)
+    {
+        if (StackedChild != null) return false;
+
+        StackedChild = toStack;
+        OnStackStateChange?.Invoke(this);
+        return true;
+    }
+
+    /// <summary>
     /// Stack this card on another. Throws on failure. Null is the same as calling Unstack.
     /// </summary>
     /// <param name="other"></param>
@@ -170,6 +264,7 @@ public class Card : MonoBehaviour
         {
             if (!other.TryStackChild(this))
             transform.SetParent(other.transform);
+            CallStackChangeFullStack();
             MoveToStackedCard();
         }
     }
@@ -186,6 +281,7 @@ public class Card : MonoBehaviour
             StackedOn?.UnstackChild();
             StackedOn = other;
             transform.SetParent(other.transform);
+            CallStackChangeFullStack();
             MoveToStackedCard();
             return true;
         }
@@ -202,5 +298,32 @@ public class Card : MonoBehaviour
         StackedOn?.UnstackChild();
         StackedOn = null;
         transform.SetParent(GameManager.CardContainer);
+        CallStackChangeFullStack();
+    }
+
+    /// <summary>
+    /// Calls OnStackStateChange on this card and all its children.
+    /// </summary>
+    public void CallStackChangeFullStack()
+    {
+        Card current = this;
+        OnStackStateChange?.Invoke(this);
+        while (current.StackedChild != null)
+        {
+            current = current.StackedChild;
+            current.OnStackStateChange?.Invoke(current);
+        }
+
+        current = this;
+        while (current.StackedOn != null)
+        {
+            current = current.StackedOn;
+            current.OnStackStateChange?.Invoke(current);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        CardManager.RemoveCard(this);
     }
 }
