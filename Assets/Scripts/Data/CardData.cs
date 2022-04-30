@@ -78,7 +78,7 @@ namespace Data
 
                 try
                 {
-                    Hydrate(ref result, data.Properties().First(), context);
+                    Hydrate(ref result, data, context);
                 }
                 catch (AssertFailedException e)
                 {
@@ -91,18 +91,19 @@ namespace Data
             throw new Exception("CardDataConverter requires a CardDataContext to be passed to the JsonSerializer.");
         }
 
-        private void Hydrate(ref CardData data, JProperty property, CardDataContext context)
+        private void Hydrate(ref CardData card, JObject data, CardDataContext context)
         {
-            JObject obj = property.Value as JObject;
-            data.Name = property.Name;
+            JToken nameToken = data["Name"];
+            Assert.IsTrue(nameToken != null, "Card must contain a name.");
+            card.Name = nameToken.Value<string>();
 
-            string relativePath = obj["Image"].Value<string>();
+            string relativePath = data["Image"].Value<string>();
             Assert.IsTrue(relativePath != null, $"Card image path is null.");
             string fullImagePath = Path.Combine(context.FilePath, relativePath);
-            data.Image = new Texture2D(0, 0);
-            data.Image.LoadImage(File.ReadAllBytes(fullImagePath));
+            card.Image = new Texture2D(0, 0);
+            card.Image.LoadImage(File.ReadAllBytes(fullImagePath));
 
-            JToken ost = obj["OnStack"];
+            JToken ost = data["OnStack"];
             JArray onStack = ost as JArray;
             Assert.IsTrue((ost != null) == (onStack != null), "OnStack must be an array or null.");
             if (ost != null)
@@ -111,7 +112,7 @@ namespace Data
                 {
                     JObject interaction = token as JObject;
                     Assert.IsTrue(interaction != null, "");
-                    data.OnStack.Add(interaction.ToObject<InteractionData>());
+                    card.OnStack.Add(interaction.ToObject<InteractionData>());
                 }
             }
         }

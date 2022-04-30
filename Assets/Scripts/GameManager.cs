@@ -31,9 +31,27 @@ namespace Systems
             if (_CardContainer == null) throw new System.NullReferenceException("_CardContainer is null. Set from inspector.");
             CardContainer = _CardContainer;
 
-            DataManager.LoadCards();
+            DataManager.LoadModules();
+            SpawnAllCardsInGrid();
         }
 
+        private void SpawnAllCardsInGrid()
+        {
+            const float xExtent = 10;
+            const float yExtent = 4;
+            const float xSpacing = 1.5f;
+            const float ySpacing = 2f;
 
+            const int xCount = (int)(xExtent / xSpacing);
+
+            int current = 0;
+            foreach (CardData card in CardManager.LoadedCards.Values)
+            {
+                int x = current % xCount;
+                int y = current / xCount;
+                CardManager.SpawnCard(card, new Vector3(-xExtent + x * xSpacing, yExtent - y * ySpacing, 0));
+                current++;
+            }
+        }
     }
 }

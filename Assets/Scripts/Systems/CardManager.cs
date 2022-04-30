@@ -23,36 +23,40 @@ namespace Systems
         /// </summary>
         public static Dictionary<string, List<Card>> CardsByTag = new Dictionary<string, List<Card>>();
 
-        public static Card SpawnCard(string name)
+        public static Card SpawnCard(string name, Vector3 position = default, Quaternion rotation = default)
         {
             if (LoadedCards.TryGetValue(name, out CardData data))
             {
-                Card card = UnityEngine.Object.Instantiate(GameManager.instance.CardPrefab, GameManager.CardContainer).GetComponent<Card>();
-                card.Initialise(data);
-
-                if (!CardsByName.ContainsKey(name))
-                {
-                    CardsByName.Add(name, new List<Card>());
-                }
-                CardsByName[name].Add(card);
-
-                // TODO: Add to dictionary by tags.
-                return card;
+                return SpawnCard(data, position, rotation);
             }
 
             throw new ArgumentOutOfRangeException($"Card '{name}' does not exist.");
         }
 
+        public static Card SpawnCard(CardData data, Vector3 position = default, Quaternion rotation = default)
+        {
+            Card card = UnityEngine.Object.Instantiate(GameManager.instance.CardPrefab, position, rotation, GameManager.CardContainer).GetComponent<Card>();
+            card.Initialise(data);
+
+            if (!CardsByName.ContainsKey(data.Name))
+            {
+                CardsByName.Add(data.Name, new List<Card>());
+            }
+            // TODO: Add to dictionary by tags.            
+            CardsByName[data.Name].Add(card);
+            return card;
+        }
+
         public static void RemoveCard(Card card)
         {
-            if (CardsByName.ContainsKey(card.CardName))
-            {
-                CardsByName[card.CardName].Remove(card);
-            }
-            else
-            {
-                Debug.LogError($"Card '{card.CardName}' does not exist.");
-            }
+        if (CardsByName.ContainsKey(card.CardName))
+        {
+            CardsByName[card.CardName].Remove(card);
+        }
+        else
+        {
+            Debug.LogError($"Card '{card.CardName}' does not exist.");
+        }
         }
     }
 }

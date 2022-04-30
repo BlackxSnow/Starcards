@@ -246,8 +246,10 @@ MonoBehaviour:
   _ProgressBar: {fileID: 7059037415457054910, guid: bd141c3671e91214586e02ae51bc6f1b,
     type: 3}
   _ProgressBarContainer: {fileID: 2244207810244801670}
-  NameText: {fileID: 6238341264390886891}
-  CardImage: {fileID: 6693520843993232035}
+  _NameText: {fileID: 6238341264390886891}
+  _CardImage: {fileID: 6693520843993232035}
+  _CardInfo: {fileID: 6238341263943142622}
+  _Collider: {fileID: 6238341264430424277}
 --- !u!114 &6238341263328945511
 MonoBehaviour:
   m_ObjectHideFlags: 0

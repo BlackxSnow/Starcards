@@ -22,7 +22,7 @@ public class Card : MonoBehaviour
     /// <summary>
     /// Offset towards the camera ('up') the card is moved when stacking on another.
     /// </summary>
-    public const float StackZOffset = 0.01f;
+    public const float StackZOffset = 0.002f;
     /// <summary>
     /// Offset towards the bottom of the screen from the stacked parent's position.
     /// </summary>
@@ -30,7 +30,7 @@ public class Card : MonoBehaviour
     /// <summary>
     /// Default offset towards the camera that unstacked cards will sit at.
     /// </summary>
-    public const float DefaultZ = 0.01f;
+    public const float DefaultZ = 0.002f;
 
     #endregion
 
@@ -58,10 +58,16 @@ public class Card : MonoBehaviour
     private Transform _ProgressBarContainer;
 
     [SerializeField]
-    private TextMeshProUGUI NameText;
+    private TextMeshProUGUI _NameText;
 
     [SerializeField]
-    private RawImage CardImage;
+    private RawImage _CardImage;
+
+    [SerializeField]
+    private Canvas _CardInfo;
+
+    [SerializeField]
+    private Collider _Collider;
 
     private void Awake()
     {
@@ -78,8 +84,8 @@ public class Card : MonoBehaviour
     public void Initialise(CardData data)
     {
         Data = data;
-        NameText.text = Data.Name;
-        CardImage.texture = Data.Image;
+        _NameText.text = Data.Name;
+        _CardImage.texture = Data.Image;
         _Interactor = new Interactor(this);
     }
 
@@ -103,7 +109,7 @@ public class Card : MonoBehaviour
         Card card = CardManager.SpawnCard(cardName);
         // TODO: Implement output waypoints
         card.transform.position = position;
-        card._VelocityMove.TargetPosition = transform.position + new Vector3(1f, 0, 0);
+        card._VelocityMove.TargetPosition = transform.position + new Vector3(1f, 0, -DefaultZ);
     }
 
     /// <summary>

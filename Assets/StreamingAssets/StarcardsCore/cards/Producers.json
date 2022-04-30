@@ -1,0 +1,28 @@
+[
+    {
+        "Name": "Iron Mine",
+        "Image": "Producer_IronOre.png",
+
+        "OnStack": [
+            {
+                "Require": [ "Worker 1" ],
+                "Create": [ "Iron Ore" ],
+                "Duration": 2.5
+            }
+        ]
+    },
+    
+    {
+        "Name": "Smeltery",
+        "Image": "Producer_Iron.png",
+
+        "OnStack": [
+            {
+                "Consume": [ { "Iron Ore": { "Quantity": 2 }} ],
+                "Require": [ "Worker 1" ],
+                "Create": [ "Iron Ingot" ],
+                "Duration": 2.5
+            }
+        ]
+    }
+]

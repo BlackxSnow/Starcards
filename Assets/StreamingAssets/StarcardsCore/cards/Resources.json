@@ -1,0 +1,11 @@
+[{ 
+    "Name": "Iron Ore",
+    "Image": "Resource_IronOre.png",
+    "Interactions": []
+},
+{ 
+    "Name": "Iron Ingot",
+    "Image": "Resource_Iron.png",
+    "Interactions": []
+}
+]
