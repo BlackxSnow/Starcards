@@ -1,4 +1,5 @@
 using Interfaces;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -30,6 +31,8 @@ public class VelocityMove : MonoBehaviour, IDirectable
     private bool IsPlanarFinished = false;
     private bool IsVerticalFinished = false;
 
+    public event Action<VelocityMove> MovementFinished;
+
     /// <summary>
     /// Acceleration while stacking onto another card.
     /// </summary>
@@ -40,6 +43,7 @@ public class VelocityMove : MonoBehaviour, IDirectable
     public Vector2 PlanarVelocity { get; protected set; } = Vector2.zero;
     public float VerticalVelocity { get; protected set; } = 0;
 
+    [SerializeField]
     private Vector3 _TargetPosition;
     public Vector3 TargetPosition
     {
@@ -48,6 +52,7 @@ public class VelocityMove : MonoBehaviour, IDirectable
         {
             Debug.Assert(!Utility.Vector.IsNaN(value), "Target position cannot be NaN.");
             _TargetPosition = value;
+            ResetFinished();
         }
     }
 
@@ -95,9 +100,10 @@ public class VelocityMove : MonoBehaviour, IDirectable
         {
             transform.position = new Vector3(TargetPosition.x, TargetPosition.y, transform.position.z);
             PlanarVelocity = Vector2.zero;
-            if (IsStacking)
+            IsPlanarFinished = true;
+            if (IsVerticalFinished)
             {
-                IsPlanarFinished = true;
+                MovementFinished?.Invoke(this);
             }
         }
     }
@@ -119,9 +125,11 @@ public class VelocityMove : MonoBehaviour, IDirectable
         {
             transform.position = new Vector3(transform.position.x, transform.position.y, TargetPosition.z);
             VerticalVelocity = 0;
-            if (IsStacking)
+
+            IsVerticalFinished = true;
+            if (IsPlanarFinished)
             {
-                IsVerticalFinished = true;
+                MovementFinished?.Invoke(this);
             }
         }
     }
@@ -130,8 +138,11 @@ public class VelocityMove : MonoBehaviour, IDirectable
     {
         if (TargetPosition != transform.position)
         {
+            
             Vector3 displacement = TargetPosition - transform.position;
-
+            if (Mathf.Abs(displacement.x) + Mathf.Abs(displacement.y) > 0.001f) IsPlanarFinished = false;
+            if (Mathf.Abs(displacement.z) > 0.001f) IsVerticalFinished = false;
+            Debug.Log($"Doing movement: {gameObject.name}, Displacement: {displacement}");
             CalculatePlanarVelocity(displacement);
             CalculateVerticalVelocity(displacement);
 

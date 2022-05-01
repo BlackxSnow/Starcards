@@ -30,6 +30,8 @@ namespace Interactions
                 if (!IsRunning) return;
                 _TokenSource?.Cancel();
                 IsRunning = false;
+                Consumed.Clear();
+                Listener.RemoveAllListeners();
             }
 
             public void Start()
@@ -69,10 +71,7 @@ namespace Interactions
             
             public void Complete()
             {
-                foreach (Card card in Consumed)
-                {
-                    GameObject.Destroy(card.gameObject);
-                }
+                Systems.CardManager.DestroyCards(_AttachedCard.transform.position, Consumed.ToArray());
                 
                 foreach (CardRef card in Data.Create)
                 {
@@ -127,12 +126,40 @@ namespace Interactions
             }
         }
 
+        public enum InteractorState
+        {             
+            All,
+            DoNotStartNew,
+            None,
+        }
+
+        public InteractorState State { get; protected set; }
+
         public Card AttachedCard { get; protected set; }
 
         public Dictionary<uint, InteractionProcess> Processes = new Dictionary<uint, InteractionProcess>();
+        
+        public void SetState(InteractorState state)
+        {
+            State = state;
+            
+            if (State == InteractorState.None)
+            {
+                AttachedCard.OnStackStateChange -= CheckProcesses;
+                foreach (InteractionProcess process in Processes.Values)
+                {
+                    process.Cancel();
+                }
+            }
+            else
+            {
+                AttachedCard.OnStackStateChange += CheckProcesses;
+            }
+        }
 
         public void RequestCompletion(InteractionProcess process)
         {
+            Debug.Assert(State != InteractorState.None, "Completion requested while interactor was disabled.");
             process.Listener.RemoveAllListeners();
             process.Complete();
 
@@ -145,10 +172,11 @@ namespace Interactions
 
         public void CheckProcesses(Card _)
         {
+            Debug.Assert(State != InteractorState.None, "CheckProcesses called while interactor was disabled.");
             foreach (InteractionProcess process in Processes.Values)
             {
                 bool isValid = process.Data.IsValidForRun(AttachedCard, out Card[] required, out Card[] consumed);
-                if (isValid && !process.IsRunning)
+                if (State == InteractorState.All && isValid && !process.IsRunning)
                 {
                     AddListeners(process, required, consumed);
                     process.Start();
@@ -177,6 +205,7 @@ namespace Interactions
 
         public void OnCardChange(Card card, uint interactionID)
         {
+            Debug.Assert(State != InteractorState.None, "OnCardChange called while interactor was disabled.");
             if (!card.HasParent(AttachedCard))
             {
                 InteractionProcess process = Processes[interactionID];

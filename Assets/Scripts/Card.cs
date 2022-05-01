@@ -9,6 +9,7 @@ using UnityEngine.UI;
 using Data;
 using Interactions;
 using System;
+using Utility;
 
 [RequireComponent(typeof(Draggable), typeof(VelocityMove))]
 public class Card : MonoBehaviour
@@ -96,6 +97,17 @@ public class Card : MonoBehaviour
     public UI.ProgressBar RequestProgressBar()
     {
         return Instantiate(_ProgressBar, _ProgressBarContainer).GetComponent<UI.ProgressBar>();
+    }
+    
+    public void PrepareForDestroy()
+    {
+        SetDraggable(false);
+        SetInteractable(Interactor.InteractorState.None);
+    }
+
+    public void SetInteractable(Interactor.InteractorState state)
+    {
+        _Interactor.SetState(state);
     }
 
     public void SetDraggable(bool isDraggable)
@@ -223,6 +235,17 @@ public class Card : MonoBehaviour
         }
     }
 
+    public void MoveTo(Vector3 pos)
+    {
+        _VelocityMove.TargetPosition = pos;
+    }
+    public void MoveTo(Vector3 pos, Action<VelocityMove> onFinished)
+    {
+        _VelocityMove.TargetPosition = pos;
+        _VelocityMove.MovementFinished += onFinished;
+        Debug.Log($"Move to called on {gameObject.name} to position: {pos}");
+    }
+
     /// <summary>
     /// Sets the correct position / offset of this card from its current parent.
     /// </summary>
@@ -236,11 +259,14 @@ public class Card : MonoBehaviour
     /// <summary>
     /// Remove the currently stacked child.
     /// </summary>
-    public void UnstackChild()
+    public void UnstackChild(bool shouldInvoke = true)
     {
         if (StackedChild == null) Debug.LogWarning("UnstackChild called with no existing child.");
         StackedChild = null;
-        OnStackStateChange?.Invoke(this);
+        if (shouldInvoke)
+        {
+            OnStackStateChange?.Invoke(this); 
+        }
     }
 
     /// <summary>
@@ -263,6 +289,7 @@ public class Card : MonoBehaviour
     /// <param name="other"></param>
     public void StackOn(Card other)
     {
+        Assert.IsTrue(other != StackedChild, "Attempted to stack on child.");
         StackedOn?.UnstackChild();
         StackedOn = other;
 
@@ -307,6 +334,13 @@ public class Card : MonoBehaviour
         CallStackChangeFullStack();
     }
 
+    public void ClearStackRefs()
+    {
+        StackedOn = null;
+        StackedChild = null;
+        _VelocityMove.IsStacking = false;
+    }
+
     /// <summary>
     /// Calls OnStackStateChange on this card and all its children.
     /// </summary>
@@ -327,9 +361,6 @@ public class Card : MonoBehaviour
             current.OnStackStateChange?.Invoke(current);
         }
     }
-
-    private void OnDestroy()
-    {
-        CardManager.RemoveCard(this);
-    }
+    
+    
 }

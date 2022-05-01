@@ -36,6 +36,7 @@ namespace Systems
         public static Card SpawnCard(CardData data, Vector3 position = default, Quaternion rotation = default)
         {
             Card card = UnityEngine.Object.Instantiate(GameManager.instance.CardPrefab, position, rotation, GameManager.CardContainer).GetComponent<Card>();
+            card.gameObject.name = data.Name;
             card.Initialise(data);
 
             if (!CardsByName.ContainsKey(data.Name))
@@ -49,14 +50,54 @@ namespace Systems
 
         public static void RemoveCard(Card card)
         {
-        if (CardsByName.ContainsKey(card.CardName))
-        {
-            CardsByName[card.CardName].Remove(card);
+            if (CardsByName.ContainsKey(card.CardName))
+            {
+                CardsByName[card.CardName].Remove(card);
+            }
+            else
+            {
+                Debug.LogError($"Card '{card.CardName}' does not exist.");
+            }
         }
-        else
+
+        private static void PrepareCardForDestroy(Card card)
         {
-            Debug.LogError($"Card '{card.CardName}' does not exist.");
+            CardsByName.Remove(card.CardName);
+            card.PrepareForDestroy();
+
+            if (card.StackedOn != null && card.StackedChild != null)
+            {
+                card.StackedOn.UnstackChild(false);
+                card.StackedChild.StackOn(card.StackedOn);
+            }
+            else
+            {
+                card.StackedOn?.UnstackChild(true);
+                card.StackedChild?.Unstack();
+            }
+
+            card.transform.SetParent(GameManager.CardContainer);
+            card.ClearStackRefs();
         }
+
+
+        public static void DestroyCards(params Card[] cards)
+        {
+            foreach(Card toDestroy in cards)
+            {
+                PrepareCardForDestroy(toDestroy);
+                UnityEngine.Object.Destroy(toDestroy.gameObject);
+            }
+        }
+
+        public static void DestroyCards(Vector3 moveTo, params Card[] cards)
+        {
+            foreach (Card toDestroy in cards)
+            {
+                PrepareCardForDestroy(toDestroy);
+
+                toDestroy.MoveTo(moveTo, (v) => UnityEngine.Object.Destroy(v.gameObject));
+            }
         }
     }
 }
