@@ -206,7 +206,6 @@ GameObject:
   - component: {fileID: 6238341263328945505}
   - component: {fileID: 6238341263328945504}
   - component: {fileID: 6238341263328945511}
-  - component: {fileID: 2032260670527528099}
   m_Layer: 0
   m_Name: Card
   m_TagString: Untagged
@@ -243,6 +242,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5ea2bf74b1bac2143b5ba110c39a494a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Speed: 1
   _ProgressBar: {fileID: 7059037415457054910, guid: bd141c3671e91214586e02ae51bc6f1b,
     type: 3}
   _ProgressBarContainer: {fileID: 2244207810244801670}
@@ -262,23 +262,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a65bca4490b17ed4d869df0908143671, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &2032260670527528099
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6238341263328945506}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8703e7b239de5c148b1a64936fa1a50d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  SpeedMultiplier: 0.98
-  PlanarAcceleration: 500
-  VerticalAcceleration: 15
-  IsStacking: 0
-  PlanarStackingAcceleration: 15
 --- !u!1 &6238341263780080257
 GameObject:
   m_ObjectHideFlags: 0

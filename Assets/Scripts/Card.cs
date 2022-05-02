@@ -10,8 +10,11 @@ using Data;
 using Interactions;
 using System;
 using Utility;
+using System.Threading.Tasks;
+using System.Threading;
+using UnityAsync;
 
-[RequireComponent(typeof(Draggable), typeof(VelocityMove))]
+[RequireComponent(typeof(Draggable))]
 public class Card : MonoBehaviour
 {
     #region CardLayoutVars
@@ -35,8 +38,9 @@ public class Card : MonoBehaviour
 
     #endregion
 
+    public float Speed = 10.0f;
+
     private Draggable _Draggable;
-    private VelocityMove _VelocityMove;
     private Interactor _Interactor;
 
     private bool _IsDraggable = true;
@@ -73,9 +77,6 @@ public class Card : MonoBehaviour
     private void Awake()
     {
         _Draggable = GetComponent<Draggable>();
-        _VelocityMove = GetComponent<VelocityMove>();
-
-        _Draggable.Directable = _VelocityMove;
         _Draggable.enabled = _IsDraggable;
         
         _Draggable.OnStartDrag += OnPickup;
@@ -121,7 +122,6 @@ public class Card : MonoBehaviour
         Card card = CardManager.SpawnCard(cardName);
         // TODO: Implement output waypoints
         card.transform.position = position;
-        card._VelocityMove.TargetPosition = transform.position + new Vector3(1f, 0, -DefaultZ);
     }
 
     /// <summary>
@@ -199,7 +199,7 @@ public class Card : MonoBehaviour
     /// <returns></returns>
     private Card CheckForStackUnderCard()
     {
-        Ray ray = new Ray(new Vector3(_VelocityMove.TargetPosition.x, _VelocityMove.TargetPosition.y, transform.position.z), Vector3.forward);
+        Ray ray = new Ray(new Vector3(transform.position.x, transform.position.y, transform.position.z), Vector3.forward);
         if (Physics.Raycast(ray, out RaycastHit hit))
         {
             if (hit.collider.transform.parent && hit.collider.transform.parent.TryGetComponent(out Card otherCard))
@@ -216,7 +216,7 @@ public class Card : MonoBehaviour
     private void OnPickup()
     {
         Unstack();
-        _VelocityMove.TargetPosition = new Vector3(transform.position.x, transform.position.y, -DefaultZ - PickupHeight);
+        _ = MoveZ(-DefaultZ - PickupHeight);
     }
 
     /// <summary>
@@ -231,19 +231,71 @@ public class Card : MonoBehaviour
         }
         else
         {
-            _VelocityMove.TargetPosition = new Vector3(_VelocityMove.TargetPosition.x, _VelocityMove.TargetPosition.y, -DefaultZ);
+            _ = MoveTo(new Vector3(transform.position.x, transform.position.y, -DefaultZ));
         }
     }
 
-    public void MoveTo(Vector3 pos)
+    private CancellationTokenSource _MoveTokenSource = new CancellationTokenSource();
+    private bool _IsMoving = false;
+
+    private float MapT(float t)
     {
-        _VelocityMove.TargetPosition = pos;
+        return Mathf.Sqrt(t);
     }
-    public void MoveTo(Vector3 pos, Action<VelocityMove> onFinished)
+
+    public void StopMove()
     {
-        _VelocityMove.TargetPosition = pos;
-        _VelocityMove.MovementFinished += onFinished;
-        Debug.Log($"Move to called on {gameObject.name} to position: {pos}");
+        if (_IsMoving)
+        {
+            _MoveTokenSource.Cancel();
+            _IsMoving = false;
+            _MoveTokenSource = new CancellationTokenSource();
+        }
+    }
+
+    private async Task DoMove(Func<Vector3> targetGetter, Action onFinished)
+    {
+        if (_IsMoving)
+        {
+            _MoveTokenSource.Cancel();
+            _MoveTokenSource = new CancellationTokenSource();
+        }
+        CancellationToken token = _MoveTokenSource.Token;
+        _IsMoving = true;
+
+        float timeToMove = Vector3.Distance(transform.position, targetGetter()) / Speed;
+        float t = 0;
+        while (t < 1)
+        {
+            
+            if (token.IsCancellationRequested)
+            {
+                return;
+            }
+            t = Mathf.Min(1, t + Time.fixedDeltaTime / timeToMove);
+            transform.position = Vector3.Lerp(transform.position, targetGetter(), MapT(t));
+            await Await.NextFixedUpdate();
+        }
+
+        _IsMoving = false;
+        onFinished?.Invoke();
+        return;
+    }
+    public async Task MoveTo(Vector3 pos, Action onFinished = null)
+    {
+        await DoMove(() => pos, onFinished);
+    }
+    public async Task MoveTo(Transform target, Action onFinished = null)
+    {
+        await DoMove(() => target.position, onFinished);
+    }
+    public async Task MoveTo(Transform target, Vector3 offset, Action onFinished = null)
+    {
+        await DoMove(() => target.position + offset, onFinished);
+    }
+    public async Task MoveZ(float target)
+    {
+        await DoMove(() => new Vector3(transform.position.x, transform.position.y, target), null);
     }
 
     /// <summary>
@@ -252,8 +304,7 @@ public class Card : MonoBehaviour
     private void MoveToStackedCard()
     {
         Debug.Assert(StackedOn, "MoveToStackedCard cannot be called with a null parent.");
-        _VelocityMove.IsStacking = true;
-        _VelocityMove.TargetPosition = new Vector3(StackedOn.transform.position.x, StackedOn.transform.position.y - StackYOffset, StackedOn.transform.position.z - StackZOffset);
+        _ = MoveTo(StackedOn.transform, new Vector3(0, -StackYOffset, -StackZOffset));
     }
 
     /// <summary>
@@ -326,8 +377,7 @@ public class Card : MonoBehaviour
     /// </summary>
     public void Unstack()
     {
-        _VelocityMove.IsStacking = false;
-        _VelocityMove.ResetFinished();
+        StopMove();
         StackedOn?.UnstackChild();
         StackedOn = null;
         transform.SetParent(GameManager.CardContainer);
@@ -338,11 +388,10 @@ public class Card : MonoBehaviour
     {
         StackedOn = null;
         StackedChild = null;
-        _VelocityMove.IsStacking = false;
     }
 
     /// <summary>
-    /// Calls OnStackStateChange on this card and all its children.
+    /// Calls OnStackStateChange on this card's entire stack.
     /// </summary>
     public void CallStackChangeFullStack()
     {

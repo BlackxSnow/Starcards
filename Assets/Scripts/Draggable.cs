@@ -15,8 +15,6 @@ public class Draggable : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
     private Vector2 _CursorOffset;
 
-    public IDirectable Directable;
-
     private bool _IsDragging = false;
 
     private (Ray ray, float distance) RaycastBoard(Vector3 origin)
@@ -36,38 +34,14 @@ public class Draggable : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         return Camera.main.transform.position + (ray.direction * distance);
     }
 
-    private void MoveTo(Vector3 pos)
-    {
-        if (Directable != null)
-        {
-            Directable.TargetPosition = pos;
-        }
-        else
-        {
-            transform.position = pos;
-        }
-    }
-
-    private Vector3 GetCurrentPos()
-    {
-        if (Directable != null)
-        {
-            return Directable.TargetPosition;
-        }
-        else
-        {
-            return transform.position;
-        }
-    }
-
     private void Update()
     {
         if (_IsDragging)
         {
             (Ray ray, float distance) = RaycastBoard(Mouse.current.position.ReadValue());
             Vector3 hitPos = PosFromRayAndDistance(ray, distance);
-            Vector3 currentPos = GetCurrentPos();
-            MoveTo(new Vector3(hitPos.x - _CursorOffset.x, hitPos.y - _CursorOffset.y, currentPos.z));
+            Vector3 currentPos = transform.position;
+            transform.position = new Vector3(hitPos.x - _CursorOffset.x, hitPos.y - _CursorOffset.y, currentPos.z);
         }
     }
 
