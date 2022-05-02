@@ -40,6 +40,8 @@ public class Card : MonoBehaviour
 
     public float Speed = 10.0f;
 
+    public bool IsBeingDestroyed { get; private set; } = false;
+
     private Draggable _Draggable;
     private Interactor _Interactor;
 
@@ -106,6 +108,7 @@ public class Card : MonoBehaviour
     {
         SetDraggable(false);
         SetInteractable(Interactor.InteractorState.None);
+        IsBeingDestroyed = true;
     }
 
     public void SetInteractable(Interactor.InteractorState state)
@@ -119,11 +122,15 @@ public class Card : MonoBehaviour
         _Draggable.enabled = _IsDraggable;
     }
 
-    public void SpawnCard(string cardName, Vector3 position = default)
+    public void SpawnCard(string cardName, Vector3 position = default, Vector3 moveOffset = default)
     {
         Card card = CardManager.SpawnCard(cardName);
         // TODO: Implement output waypoints
         card.transform.position = position;
+        if (moveOffset != default)
+        {
+            _ = card.MoveTo(card.transform.position + moveOffset, null, Utility.Easings.EaseInOutCirc);
+        }
     }
 
     /// <summary>
@@ -240,11 +247,6 @@ public class Card : MonoBehaviour
     private CancellationTokenSource _MoveTokenSource = new CancellationTokenSource();
     private bool _IsMoving = false;
 
-    private float MapT(float t)
-    {
-        return Mathf.Sqrt(t);
-    }
-
     public void StopMove()
     {
         if (_IsMoving)
@@ -255,7 +257,7 @@ public class Card : MonoBehaviour
         }
     }
 
-    private async Task DoMove(Func<Vector3> targetGetter, Action onFinished)
+    private async Task DoMove(Func<Vector3> targetGetter, Action onFinished, Func<float, float> easingFunction)
     {
         if (_IsMoving)
         {
@@ -275,7 +277,8 @@ public class Card : MonoBehaviour
                 return;
             }
             t = Mathf.Min(1, t + Time.fixedDeltaTime / timeToMove);
-            transform.position = Vector3.Lerp(transform.position, targetGetter(), MapT(t));
+            transform.position = Vector3.Lerp(transform.position, targetGetter(), easingFunction(t));
+            //if (onFinished != null) Debug.Log($"{Time.frameCount}: {gameObject.name} t value: {t}");
             await Await.NextFixedUpdate();
         }
 
@@ -283,21 +286,24 @@ public class Card : MonoBehaviour
         onFinished?.Invoke();
         return;
     }
-    public async Task MoveTo(Vector3 pos, Action onFinished = null)
+
+    static Func<float, float> DEFAULT_EASING = Utility.Easings.EaseInOutQuad;
+    
+    public async Task MoveTo(Vector3 pos, Action onFinished = null, Func<float, float> easingFunction = null)
     {
-        await DoMove(() => pos, onFinished);
+        await DoMove(() => pos, onFinished, easingFunction ?? DEFAULT_EASING);
     }
-    public async Task MoveTo(Transform target, Action onFinished = null)
+    public async Task MoveTo(Transform target, Action onFinished = null, Func<float, float> easingFunction = null)
     {
-        await DoMove(() => target.position, onFinished);
+        await DoMove(() => target.position, onFinished, easingFunction ?? DEFAULT_EASING);
     }
-    public async Task MoveTo(Transform target, Vector3 offset, Action onFinished = null)
+    public async Task MoveTo(Transform target, Vector3 offset, Action onFinished = null, Func<float, float> easingFunction = null)
     {
-        await DoMove(() => target.position + offset, onFinished);
+        await DoMove(() => target.position + offset, onFinished, easingFunction ?? DEFAULT_EASING);
     }
-    public async Task MoveZ(float target)
+    public async Task MoveZ(float target, Func<float, float> easingFunction = null)
     {
-        await DoMove(() => new Vector3(transform.position.x, transform.position.y, target), null);
+        await DoMove(() => new Vector3(transform.position.x, transform.position.y, target), null, easingFunction ?? DEFAULT_EASING);
     }
 
     /// <summary>
@@ -350,7 +356,7 @@ public class Card : MonoBehaviour
     /// <param name="other"></param>
     public void StackOn(Card other)
     {
-        Assert.IsTrue(other != StackedChild, "Attempted to stack on child.");
+        Assert.IsTrue(other != StackedChild, "Attempted to stack on own child.");
         StackedOn?.UnstackChild();
         StackedOn = other;
 

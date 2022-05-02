@@ -95,8 +95,9 @@ namespace Systems
             foreach (Card toDestroy in cards)
             {
                 PrepareCardForDestroy(toDestroy);
-                
-                _ = toDestroy.MoveTo(moveTo, () => UnityEngine.Object.Destroy(toDestroy.gameObject));
+
+                //Debug.Log($"{Time.frameCount}: Start destroy: {toDestroy.gameObject.name}");
+                _ = toDestroy.MoveTo(moveTo, () => { UnityEngine.Object.Destroy(toDestroy.gameObject); /*Debug.Log($"{Time.frameCount}: Destroying {toDestroy.gameObject.name}"); */});
             }
         }
     }

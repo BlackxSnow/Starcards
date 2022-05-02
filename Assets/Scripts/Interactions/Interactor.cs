@@ -77,7 +77,7 @@ namespace Interactions
                 {
                     for (int i = 0; i < card.Quantity; i++)
                     {
-                        _AttachedCard.SpawnCard(card.CardName, _AttachedCard.transform.position);
+                        _AttachedCard.SpawnCard(card.CardName, _AttachedCard.transform.position, new Vector3(1.5f, 0, 0));
                     }
                 }
             }
