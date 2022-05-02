@@ -68,8 +68,10 @@ public class Card : MonoBehaviour
     [SerializeField]
     private RawImage _CardImage;
 
+
     [SerializeField]
     private Canvas _CardInfo;
+    public Canvas CardInfo { get => _CardInfo; }
 
     [SerializeField]
     private Collider _Collider;
@@ -334,6 +336,14 @@ public class Card : MonoBehaviour
         return true;
     }
 
+    private void DoStack(Card other)
+    {
+        transform.SetParent(other.transform);
+        CallStackChangeFullStack();
+        MoveToStackedCard();
+        CardInfo.sortingOrder = other.CardInfo.sortingOrder + 1;
+    }
+
     /// <summary>
     /// Stack this card on another. Throws on failure. Null is the same as calling Unstack.
     /// </summary>
@@ -346,10 +356,8 @@ public class Card : MonoBehaviour
 
         if (other != null)
         {
-            if (!other.TryStackChild(this))
-            transform.SetParent(other.transform);
-            CallStackChangeFullStack();
-            MoveToStackedCard();
+            if (!other.TryStackChild(this)) Debug.LogError($"Failed to stack '{CardName}' on other '{other.CardName}'.");
+            DoStack(other);
         }
     }
 
@@ -364,9 +372,7 @@ public class Card : MonoBehaviour
         {
             StackedOn?.UnstackChild();
             StackedOn = other;
-            transform.SetParent(other.transform);
-            CallStackChangeFullStack();
-            MoveToStackedCard();
+            DoStack(other);
             return true;
         }
         return false;
