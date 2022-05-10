@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Utility.Enumerators;
 
 namespace Utility
 {
@@ -22,42 +23,50 @@ namespace Utility
     }
     public class ImprovedLinkedList<T> : IEnumerable<T>
     {
-        public struct Enumerator : IEnumerator<T>
-        {
-            private ImprovedLinkedList<T> _List;
-            private ImprovedLinkedListNode<T> _StartNode;
-            private ImprovedLinkedListNode<T> _CurrentNode;
-            public T Current => _CurrentNode.Value;
-
-            object IEnumerator.Current => Current;
-
-            public void Dispose()
-            {
-
-            }
-
-            public bool MoveNext()
-            {
-                _CurrentNode = _CurrentNode.Next;
-                return _CurrentNode != null;
-            }
-
-            public void Reset()
-            {
-                _CurrentNode = _StartNode;
-            }
-
-            public Enumerator(ImprovedLinkedList<T> list)
-            {
-                _List = list;
-                _StartNode = new ImprovedLinkedListNode<T>(default, null, _List.Head);
-                _CurrentNode = _StartNode;
-            }
-        }
-
         public IEnumerator<T> GetEnumerator()
         {
-            return new Enumerator(this);
+            return new ForwardsEnumerator<T>(this, Head);
+        }
+        public IEnumerator<T> GetEnumerator(ImprovedLinkedListNode<T> start)
+        {
+            return new ForwardsEnumerator<T>(this, start);
+        }
+        public IEnumerator<T> GetEnumerator(T value)
+        {
+            return new ForwardsEnumerator<T>(this, Find(value));
+        }
+        public IEnumerator<T> GetEnumerator(int offset)
+        {
+            ImprovedLinkedListNode<T> start = Head;
+            for (int i = 0; i < offset; i++)
+            {
+                start = start.Next;
+                if (start == null) throw new ArgumentOutOfRangeException();
+            }
+            return new ForwardsEnumerator<T>(this, start);
+        }
+
+        public IEnumerator<T> GetReverseEnumerator()
+        {
+            return new BackwardsEnumerator<T>(this, Head);
+        }
+        public IEnumerator<T> GetReverseEnumerator(ImprovedLinkedListNode<T> start)
+        {
+            return new BackwardsEnumerator<T>(this, start);
+        }
+        public IEnumerator<T> GetReverseEnumerator(T value)
+        {
+            return new BackwardsEnumerator<T>(this, Find(value));
+        }
+        public IEnumerator<T> GetReverseEnumerator(int offset)
+        {
+            ImprovedLinkedListNode<T> start = Tail;
+            for (int i = 0; i < offset; i++)
+            {
+                start = start.Previous;
+                if (start == null) throw new ArgumentOutOfRangeException();
+            }
+            return new BackwardsEnumerator<T>(this, start);
         }
 
         IEnumerator IEnumerable.GetEnumerator()
