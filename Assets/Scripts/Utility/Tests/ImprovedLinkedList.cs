@@ -232,4 +232,18 @@ public class ImprovedLinkedList
         Assert.AreEqual(5, splitList.Tail.Value);
         Assert.AreEqual(3, splitList.Count);
     }
+
+    [Test]
+    public void Concat()
+    {
+        Utility.ImprovedLinkedList<int> list = new Utility.ImprovedLinkedList<int>();
+        list.AddFirst(new int[] { 1, 2, 3, 4, 5 });
+        Utility.ImprovedLinkedList<int> list2 = new Utility.ImprovedLinkedList<int>();
+        list2.AddFirst(new int[] { 6, 7, 8, 9, 10 });
+
+        list.Concat(list2);
+        Assert.AreEqual(1, list.Head.Value);
+        Assert.AreEqual(10, list.Tail.Value);
+        Assert.AreEqual(10, list.Count);
+    }
 }

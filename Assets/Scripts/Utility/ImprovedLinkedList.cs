@@ -106,29 +106,33 @@ namespace Utility
             throw new ArgumentOutOfRangeException();
         }
 
-        public void AddFirst(T value)
+        public ImprovedLinkedListNode<T> AddFirst(T value)
         {
             ImprovedLinkedListNode<T> newNode = new ImprovedLinkedListNode<T>(value, null, Head);
             if (Head != null) Head.Previous = newNode;
             Head = newNode;
             if (Tail == null) Tail = newNode;
             _Count++;
+            return newNode;
         }
-        public void AddFirst(IEnumerable<T> values)
+        public IEnumerable<ImprovedLinkedListNode<T>> AddFirst(IEnumerable<T> values)
         {
-            Insert(null, Head, values);
+            return Insert(null, Head, values);
         }
-        private void Insert(ImprovedLinkedListNode<T> previous, ImprovedLinkedListNode<T> next, T value)
+        private ImprovedLinkedListNode<T> Insert(ImprovedLinkedListNode<T> previous, ImprovedLinkedListNode<T> next, T value)
         {
             ImprovedLinkedListNode<T> newNode = new ImprovedLinkedListNode<T>(value, previous, next);
             if (previous != null) previous.Next = newNode;
             if (next != null) next.Previous = newNode;
             _Count++;
+            return newNode;
         }
-        private void Insert(ImprovedLinkedListNode<T> previous, ImprovedLinkedListNode<T> next, IEnumerable<T> values)
+        private IEnumerable<ImprovedLinkedListNode<T>> Insert(ImprovedLinkedListNode<T> previous, ImprovedLinkedListNode<T> next, IEnumerable<T> values)
         {
-            if (!values.Any()) return;
+            List<ImprovedLinkedListNode<T>> nodes = new List<ImprovedLinkedListNode<T>>();
+            if (!values.Any()) return nodes;
             ImprovedLinkedListNode<T> first = new ImprovedLinkedListNode<T>(values.First(), previous, null);
+            nodes.Add(first);
             ImprovedLinkedListNode<T> last = first;
 
             foreach (var value in values.Skip(1))
@@ -136,6 +140,7 @@ namespace Utility
                 ImprovedLinkedListNode<T> newNode = new ImprovedLinkedListNode<T>(value, last, null);
                 last.Next = newNode;
                 last = newNode;
+                nodes.Add(newNode);
             }
 
             if (previous != null)
@@ -155,61 +160,61 @@ namespace Utility
             {
                 Tail = last;
             }
-            _Count += values.Count();
+            _Count += nodes.Count();
+            return nodes;
         }
-        public void AddLast(T value)
+        public ImprovedLinkedListNode<T> AddLast(T value)
         {
             ImprovedLinkedListNode<T> newNode = new ImprovedLinkedListNode<T>(value, Tail, null);
             if (Tail != null) Tail.Next = newNode;
             Tail = newNode;
             if (Head == null) Head = newNode;
             _Count++;
+            return newNode;
         }
-        public void AddLast(IEnumerable<T> values)
+        public IEnumerable<ImprovedLinkedListNode<T>> AddLast(IEnumerable<T> values)
         {
-            Insert(Tail, null, values);
+            return Insert(Tail, null, values);
         }
-        public void AddBefore(ImprovedLinkedListNode<T> before, T value)
+        public ImprovedLinkedListNode<T> AddBefore(ImprovedLinkedListNode<T> before, T value)
         {
             if (before == Head)
             {
-                AddFirst(value);
-                return;
+                return AddFirst(value);
             }
-            Insert(before.Previous, before, value);
+            return Insert(before.Previous, before, value);
         }
-        public void AddBefore(ImprovedLinkedListNode<T> before, IEnumerable<T> values)
+        public IEnumerable<ImprovedLinkedListNode<T>> AddBefore(ImprovedLinkedListNode<T> before, IEnumerable<T> values)
         {
-            Insert(before.Previous, before, values);
+            return Insert(before.Previous, before, values);
         }
-        public void AddBefore(T before, T value)
+        public ImprovedLinkedListNode<T> AddBefore(T before, T value)
         {
-            AddBefore(Find(before), value);
+            return AddBefore(Find(before), value);
         }
-        public void AddBefore(T before, IEnumerable<T> values)
+        public IEnumerable<ImprovedLinkedListNode<T>> AddBefore(T before, IEnumerable<T> values)
         {
-            AddBefore(Find(before), values);
+            return AddBefore(Find(before), values);
         }
-        public void AddAfter(ImprovedLinkedListNode<T> after, T value)
+        public ImprovedLinkedListNode<T> AddAfter(ImprovedLinkedListNode<T> after, T value)
         {
             if (after == Tail)
             {
-                AddLast(value);
-                return;
+                return AddLast(value);
             }
-            Insert(after, after.Next, value);
+            return Insert(after, after.Next, value);
         }
-        public void AddAfter(ImprovedLinkedListNode<T> after, IEnumerable<T> values)
+        public IEnumerable<ImprovedLinkedListNode<T>> AddAfter(ImprovedLinkedListNode<T> after, IEnumerable<T> values)
         {
-            Insert(after, after.Next, values);
+            return Insert(after, after.Next, values);
         }
-        public void AddAfter(T after, T value)
+        public ImprovedLinkedListNode<T> AddAfter(T after, T value)
         {
-            AddAfter(Find(after), value);
+            return AddAfter(Find(after), value);
         }
-        public void AddAfter(T after, IEnumerable<T> values)
+        public IEnumerable<ImprovedLinkedListNode<T>> AddAfter(T after, IEnumerable<T> values)
         {
-            AddAfter(Find(after), values);
+            return AddAfter(Find(after), values);
         }
 
         private void Attach(ImprovedLinkedListNode<T> a, ImprovedLinkedListNode<T> b)
@@ -266,6 +271,23 @@ namespace Utility
         public ImprovedLinkedList<T> Split(T splitHead)
         {
             return Split(Find(splitHead));
+        }
+
+        /// <summary>
+        /// Destructively concatenate 'other' onto this list.
+        /// </summary>
+        /// <param name="other"></param>
+        public void Concat(ImprovedLinkedList<T> other)
+        {
+            if (Count == 0)
+            {
+                AddFirst(other);
+                return;
+            }
+            if (other.Count == 0) return;
+            Attach(Tail, other.Head);
+            Tail = other.Tail;
+            _Count += other.Count;
         }
 
         public ImprovedLinkedList()
