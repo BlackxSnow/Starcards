@@ -123,9 +123,14 @@ public class Card : MonoBehaviour
 
     public void CreateCard(string cardName, Vector3 position = default, Vector3 moveOffset = default)
     {
+        bool isStack = CheckForStackUnder(position + moveOffset + new Vector3(0,0,-PickupHeight), out Stack other);
         Card card = CardManager.SpawnCard(cardName, position);
         // TODO: Implement output waypoints
-        if (moveOffset != default)
+        if (isStack)
+        {
+            card.StackOn(other);
+        }
+        else if (moveOffset != default)
         {
             _ = card.MoveComponent.MoveTo(card.transform.position + moveOffset, null, Easings.EaseInOutCirc);
         }
@@ -232,10 +237,10 @@ public class Card : MonoBehaviour
     /// </summary>
     private void OnDrop(Vector2 cursorOffset)
     {
-        Card other = CheckForStackUnderCard(cursorOffset);
-        if (other && other != this)
+        bool isStack = CheckForStackUnder(transform.position + new Vector3(cursorOffset.x, cursorOffset.y, 0), out Stack other) || CheckForStackUnder(transform.position, out other);
+        if (isStack && other != StackNode.Stack)
         {
-            StackOn(other.StackNode.Stack);
+            StackOn(other);
         }
         else
         {
@@ -244,20 +249,21 @@ public class Card : MonoBehaviour
     }
 
     /// <summary>
-    /// Raycast downwards to determine if there is a stack below the card.
+    /// Raycast downwards to determine if there is a stack below the given position.
     /// </summary>
     /// <returns></returns>
-    private Card CheckForStackUnderCard(Vector2 cursorOffset = default)
+    private bool CheckForStackUnder(Vector3 position, out Stack stack)
     {
-        //Ray cardRay = new Ray(transform.position, Vector3.forward);
-        Ray mouseRay = new Ray(transform.position + new Vector3(cursorOffset.x, cursorOffset.y, 0), Vector3.forward);
-        if (Physics.Raycast(mouseRay, out RaycastHit hit))
+        Ray ray = new Ray(position, Vector3.forward);
+        if (Physics.Raycast(ray, out RaycastHit hit))
         {
             if (hit.collider.transform.parent && hit.collider.transform.parent.TryGetComponent(out Card otherCard))
             {
-                return otherCard;
+                stack = otherCard.StackNode.Stack;
+                return true;
             }
         }
-        return null;
+        stack = null;
+        return false;
     }
 }
