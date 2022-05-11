@@ -80,6 +80,7 @@ namespace Interactions
                         _AttachedCard.CreateCard(card.CardName, _AttachedCard.transform.position, new Vector3(1.5f, 0, 0));
                     }
                 }
+                IsRunning = false;
             }
 
             public InteractionProcess(InteractionData data, Card attached, Interactor interactor)
