@@ -23,6 +23,7 @@ public class Moveable : MonoBehaviour
         CancellationToken token = _MoveTokenSource.Token;
         _IsMoving = true;
 
+        Vector3 startPosition = transform.position;
         float timeToMove = Vector3.Distance(transform.position, targetGetter()) / Speed;
         float t = 0;
         while (t < 1)
@@ -32,7 +33,7 @@ public class Moveable : MonoBehaviour
                 return;
             }
             t = Mathf.Min(1, t + Time.fixedDeltaTime / timeToMove);
-            transform.position = Vector3.Lerp(transform.position, targetGetter(), easingFunction(t));
+            transform.position = Vector3.Lerp(startPosition, targetGetter(), easingFunction(t));
             //if (onFinished != null) Debug.Log($"{Time.frameCount}: {gameObject.name} t value: {t}");
             await Await.NextFixedUpdate();
         }
