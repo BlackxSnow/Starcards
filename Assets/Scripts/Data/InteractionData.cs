@@ -47,7 +47,7 @@ namespace Data
 
             foreach (CardRef cardRef in Require)
             {
-                if (!card.HasStackedCards(cardRef.CardName, cardRef.Quantity, ref req))
+                if (!card.HasChildCards(cardRef.CardName, cardRef.Quantity, ref req))
                 {
                     return false;
                 }
@@ -55,7 +55,7 @@ namespace Data
 
             foreach (CardRef cardRef in Consume)
             {
-                if (!card.HasStackedCards(cardRef.CardName, cardRef.Quantity, ref con))
+                if (!card.HasChildCards(cardRef.CardName, cardRef.Quantity, ref con))
                 {
                     return false;
                 }

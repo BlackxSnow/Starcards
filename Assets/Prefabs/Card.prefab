@@ -205,7 +205,8 @@ GameObject:
   m_Component:
   - component: {fileID: 6238341263328945505}
   - component: {fileID: 6238341263328945504}
-  - component: {fileID: 6238341263328945511}
+  - component: {fileID: 4036413115553651603}
+  - component: {fileID: 6378958373398427215}
   m_Layer: 0
   m_Name: Card
   m_TagString: Untagged
@@ -242,15 +243,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5ea2bf74b1bac2143b5ba110c39a494a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Speed: 1
-  _ProgressBar: {fileID: 7059037415457054910, guid: bd141c3671e91214586e02ae51bc6f1b,
+  _ProgressBarPrefab: {fileID: 7059037415457054910, guid: bd141c3671e91214586e02ae51bc6f1b,
     type: 3}
   _ProgressBarContainer: {fileID: 2244207810244801670}
   _NameText: {fileID: 6238341264390886891}
   _CardImage: {fileID: 6693520843993232035}
   _CardInfo: {fileID: 6238341263943142622}
   _Collider: {fileID: 6238341264430424277}
---- !u!114 &6238341263328945511
+--- !u!114 &4036413115553651603
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -259,9 +259,22 @@ MonoBehaviour:
   m_GameObject: {fileID: 6238341263328945506}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a65bca4490b17ed4d869df0908143671, type: 3}
+  m_Script: {fileID: 11500000, guid: 095b697f60ddcd446a500acc8f58dfa7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &6378958373398427215
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6238341263328945506}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 25ac26b08c9aceb4d8baf93613bb26dc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Speed: 10
 --- !u!1 &6238341263780080257
 GameObject:
   m_ObjectHideFlags: 0

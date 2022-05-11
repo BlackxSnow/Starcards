@@ -226,15 +226,21 @@ namespace Utility
         public void RemoveFirst()
         {
             if (Head == null) throw new InvalidOperationException();
-            Head = Head.Next;
+            var toRemove = Head;
+            Head = toRemove.Next;
             Head.Previous = null;
+            toRemove.Previous = null;
+            toRemove.Next = null;
             _Count--;
         }
         public void RemoveLast()
         {
             if (Tail == null) throw new InvalidOperationException();
+            var toRemove = Tail;
             Tail = Tail.Previous;
             Tail.Next = null;
+            toRemove.Previous = null;
+            toRemove.Next = null;
             _Count--;
         }
         public void Remove(ImprovedLinkedListNode<T> toRemove)
@@ -251,6 +257,8 @@ namespace Utility
             }
 
             Attach(toRemove.Previous, toRemove.Next);
+            toRemove.Previous = null;
+            toRemove.Next = null;
             _Count--;
         }
         public void Remove(T toRemove)
@@ -279,6 +287,7 @@ namespace Utility
         /// <param name="other"></param>
         public void Concat(ImprovedLinkedList<T> other)
         {
+            if (other == this) throw new InvalidOperationException("Cannot concat list with itself.");
             if (Count == 0)
             {
                 AddFirst(other);
@@ -288,6 +297,15 @@ namespace Utility
             Attach(Tail, other.Head);
             Tail = other.Tail;
             _Count += other.Count;
+            other.Clear();
+        }
+
+        public void Clear()
+        {
+            Head = null;
+            Tail = null;
+            _Count = 0;
+            _IsCountDirty = false;
         }
 
         public ImprovedLinkedList()

@@ -77,7 +77,7 @@ namespace Interactions
                 {
                     for (int i = 0; i < card.Quantity; i++)
                     {
-                        _AttachedCard.SpawnCard(card.CardName, _AttachedCard.transform.position, new Vector3(1.5f, 0, 0));
+                        _AttachedCard.CreateCard(card.CardName, _AttachedCard.transform.position, new Vector3(1.5f, 0, 0));
                     }
                 }
             }
@@ -102,7 +102,7 @@ namespace Interactions
                 foreach (Card card in Listeners)
                 {
                     if (card == null) continue;
-                    card.OnStackStateChange -= OnCardStateChange;
+                    card.StackChanged -= OnCardStateChange;
                 }
                 Listeners.Clear();
             }
@@ -111,7 +111,7 @@ namespace Interactions
             {
                 if (Listeners.Contains(card)) return;
                 Listeners.Add(card);
-                card.OnStackStateChange += OnCardStateChange;
+                card.StackChanged += OnCardStateChange;
             }
 
             public void OnCardStateChange(Card card)
@@ -145,7 +145,7 @@ namespace Interactions
             
             if (State == InteractorState.None)
             {
-                AttachedCard.OnStackStateChange -= CheckProcesses;
+                AttachedCard.StackChanged -= CheckProcesses;
                 foreach (InteractionProcess process in Processes.Values)
                 {
                     process.Cancel();
@@ -153,7 +153,7 @@ namespace Interactions
             }
             else
             {
-                AttachedCard.OnStackStateChange += CheckProcesses;
+                AttachedCard.StackChanged += CheckProcesses;
             }
         }
 
@@ -206,7 +206,7 @@ namespace Interactions
         public void OnCardChange(Card card, uint interactionID)
         {
             Debug.Assert(State != InteractorState.None, "OnCardChange called while interactor was disabled.");
-            if (!card.HasParent(AttachedCard))
+            if (!card.HasParentCard(AttachedCard))
             {
                 InteractionProcess process = Processes[interactionID];
                 if (process.Data.IsValidForRun(AttachedCard, out Card[] required, out Card[] consumed))
@@ -223,7 +223,7 @@ namespace Interactions
             {
                 Processes.Add(data.ID, new InteractionProcess(data, attached, this));
             }
-            AttachedCard.OnStackStateChange += CheckProcesses;
+            AttachedCard.StackChanged += CheckProcesses;
         }
     }
 }

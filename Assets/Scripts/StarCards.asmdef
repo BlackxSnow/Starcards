@@ -1,10 +1,11 @@
 {
-    "name": "StarCardsCore",
+    "name": "StarcardsCore",
     "rootNamespace": "",
     "references": [
         "GUID:75469ad4d38634e559750d17036d5f7c",
         "GUID:3a4e935828f104039b90d535bc856a32",
-        "GUID:6055be8ebefd69e48b49212b09b47b2f"
+        "GUID:6055be8ebefd69e48b49212b09b47b2f",
+        "GUID:4ea81d1a64b6b05409b2836150b27e9a"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

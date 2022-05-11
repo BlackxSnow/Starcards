@@ -64,20 +64,7 @@ namespace Systems
         {
             CardsByName.Remove(card.CardName);
             card.PrepareForDestroy();
-
-            if (card.StackedOn != null && card.StackedChild != null)
-            {
-                card.StackedOn.UnstackChild(false);
-                card.StackedChild.StackOn(card.StackedOn);
-            }
-            else
-            {
-                card.StackedOn?.UnstackChild(true);
-                card.StackedChild?.Unstack();
-            }
-
-            card.transform.SetParent(GameManager.CardContainer);
-            card.ClearStackRefs();
+            card.Extract();
         }
 
 
@@ -97,7 +84,7 @@ namespace Systems
                 PrepareCardForDestroy(toDestroy);
 
                 //Debug.Log($"{Time.frameCount}: Start destroy: {toDestroy.gameObject.name}");
-                _ = toDestroy.MoveTo(moveTo, () => { UnityEngine.Object.Destroy(toDestroy.gameObject); /*Debug.Log($"{Time.frameCount}: Destroying {toDestroy.gameObject.name}"); */});
+                _ = toDestroy.MoveComponent.MoveTo(moveTo, () => { UnityEngine.Object.Destroy(toDestroy.gameObject); /*Debug.Log($"{Time.frameCount}: Destroying {toDestroy.gameObject.name}"); */});
             }
         }
     }

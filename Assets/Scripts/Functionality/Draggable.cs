@@ -11,7 +11,7 @@ public class Draggable : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     public static readonly Plane Board = new Plane(Vector3.back, 0);
 
     public Action OnStartDrag;
-    public Action OnEndDrag;
+    public Action<Vector2> OnEndDrag;
 
     private Vector2 _CursorOffset;
 
@@ -57,6 +57,6 @@ public class Draggable : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     public void OnPointerUp(PointerEventData eventData)
     {
         _IsDragging = false;
-        OnEndDrag?.Invoke();
+        OnEndDrag?.Invoke(_CursorOffset);
     }
 }
