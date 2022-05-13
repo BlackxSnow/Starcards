@@ -8,7 +8,8 @@ using UnityEngine;
 
 public class Moveable : MonoBehaviour
 {
-    static Func<float, float> DEFAULT_EASING = Utility.Easings.EaseInOutQuad;
+    static Func<float, float> DEFAULT_EASING = Utility.Easings.EaseInQuad;
+    public static Func<float, float> EasingOverride = null;
     private CancellationTokenSource _MoveTokenSource = new CancellationTokenSource();
     private bool _IsMoving = false;
     public float Speed = 10.0f;
@@ -53,18 +54,18 @@ public class Moveable : MonoBehaviour
     }
     public async Task MoveTo(Vector3 pos, Action onFinished = null, Func<float, float> easingFunction = null)
     {
-        await DoMove(() => pos, onFinished, easingFunction ?? DEFAULT_EASING);
+        await DoMove(() => pos, onFinished, easingFunction ?? EasingOverride ?? DEFAULT_EASING);
     }
     public async Task MoveTo(Transform target, Action onFinished = null, Func<float, float> easingFunction = null)
     {
-        await DoMove(() => target.position, onFinished, easingFunction ?? DEFAULT_EASING);
+        await DoMove(() => target.position, onFinished, easingFunction ?? EasingOverride ?? DEFAULT_EASING);
     }
     public async Task MoveTo(Transform target, Vector3 offset, Action onFinished = null, Func<float, float> easingFunction = null)
     {
-        await DoMove(() => target.position + offset, onFinished, easingFunction ?? DEFAULT_EASING);
+        await DoMove(() => target.position + offset, onFinished, easingFunction ?? EasingOverride ?? DEFAULT_EASING);
     }
     public async Task MoveZ(float target, Func<float, float> easingFunction = null)
     {
-        await DoMove(() => new Vector3(transform.position.x, transform.position.y, target), null, easingFunction ?? DEFAULT_EASING);
+        await DoMove(() => new Vector3(transform.position.x, transform.position.y, target), null, easingFunction ?? EasingOverride ?? DEFAULT_EASING);
     }
 }

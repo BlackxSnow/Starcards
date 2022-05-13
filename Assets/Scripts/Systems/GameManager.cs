@@ -9,6 +9,8 @@ namespace Systems
     {
         public static GameManager instance;
 
+        public static Controls Controls;
+
         public static Transform CardContainer { get; private set; }
         [SerializeField]
         private Transform _CardContainer;
@@ -30,6 +32,9 @@ namespace Systems
 
             if (_CardContainer == null) throw new System.NullReferenceException("_CardContainer is null. Set from inspector.");
             CardContainer = _CardContainer;
+
+            Controls = new Controls();
+            Controls.Enable();
 
             DataManager.LoadModules();
             SpawnAllCardsInGrid();

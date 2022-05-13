@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Systems;
+using UnityEngine;
 using Utility;
 using Utility.Enumerators;
 
@@ -30,6 +31,21 @@ public class Stack
         }
     }
 
+    private int CountBetween(Card first, Card last, bool firstInclusive = true, bool lastInclusive = false)
+    {
+        Debug.Assert(first != last, "Cannot count between a card and itself.");
+        Card current = first;
+        int count = firstInclusive ? 0 : -1;
+        while (current != last)
+        {
+            Debug.Assert(current.StackNode.Next != null, $"First '{first.name}' and last '{last.name}' are not in the same stack or in the wrong order.");
+            current = current.StackNode.Next.Value;
+            count++;
+        }
+        if (lastInclusive) count++;
+        return count;
+    }
+
     private void ResetCardStackNodes(EnumeratorBase<Card> enumerator)
     {
         foreach (Card card in enumerator)
@@ -39,8 +55,101 @@ public class Stack
         }
     }
 
+    /// <summary>
+    /// Checks if a MultiCard has valid cards to include in the immediate stack and updates the MultiCard.
+    /// </summary>
+    /// <param name="start"></param>
+    private void CheckMultiCard(Card start)
+    {
+        Card multiCard = start.MultiCard != null ? start.MultiCard : start;
+
+        Card current = start;
+        int count = 0;
+        while (multiCard.IsSameType(current.StackNode.Next?.Value))
+        {
+            current = current.StackNode.Next.Value;
+            current.MultiCardStack(multiCard);
+            count++;
+        }
+        if (count == 0)
+        {
+            start.StackNode.Next.Value.MoveToStackedCard();
+            return;
+        }
+        if (current.StackNode.Next != null)
+        {
+            current.StackNode.Next.Value.MoveToStackedCard();
+        }
+        multiCard.MultiCardTail = current;
+        multiCard.Quantity += count;
+    }
+
+    /// <summary>
+    /// Update a MultiCard to a new quantity and tail. Does not update the old children.
+    /// </summary>
+    /// <param name="multi"></param>
+    /// <param name="quantity"></param>
+    private void UpdateMultiCard(Card multi, int quantity)
+    {
+        if (quantity == multi.Quantity) return;
+        if (quantity == 1)
+        {
+            multi.Quantity = quantity;
+            multi.MultiCardTail = null;
+            return;
+        }
+
+        if (quantity > multi.Quantity)
+        {
+            Card current = multi;
+            for (int i = 1; i < multi.Quantity; i++)
+            {
+                current = current.StackNode.Next.Value;
+            }
+
+            for (int i = multi.Quantity; i < quantity; i++)
+            {
+                current = current.StackNode.Next.Value;
+                current.MultiCardStack(multi);
+            }
+            multi.Quantity = quantity;
+            multi.MultiCardTail = current;
+        }
+        else
+        {
+            Card current = multi;
+            for (int i = 1; i < multi.Quantity; i++)
+            {
+                current = current.StackNode.Next.Value;
+            }
+            multi.Quantity = quantity;
+            multi.MultiCardTail = current;
+        }
+    }
+
+    private void SplitMultiCard(Card splitHead)
+    {
+        Card firstMulti = splitHead.MultiCard;
+        int firstQuantity = CountBetween(firstMulti, splitHead);
+        int secondQuantity = firstMulti.Quantity - firstQuantity;
+        UpdateMultiCard(firstMulti, firstQuantity);
+        splitHead.MultiCardUnstack();
+        UpdateMultiCard(splitHead, secondQuantity);
+        if (secondQuantity == 1) splitHead.StackNode.Next?.Value.MoveToStackedCard();
+    }
+
+    public static Card GetMultiChild(Card multi, int distance)
+    {
+        var current = multi.StackNode.Node;
+        for (int i = 0; i < distance; i++)
+        {
+            current = current.Next;
+        }
+        return current.Value;
+    }
     public Stack Split(StackNode splitHead)
     {
+        if (splitHead.Node.Value.MultiCard != null) SplitMultiCard(splitHead.Node.Value);
         Stack newStack = new Stack(Cards.Split(splitHead.Node));
         NotifyCards();
         return newStack;
@@ -51,6 +160,7 @@ public class Stack
         Cards.Concat(other.Cards);
         ResetCardStackNodes((EnumeratorBase<Card>)Cards.GetEnumerator(otherHead));
         NotifyCards();
+        CheckMultiCard(otherHead.Previous.Value);
     }
     public void Extract(StackNode toExtract)
     {

@@ -4,11 +4,19 @@ namespace Utility
 {
     public static class Easings
     {
+        public static float EaseInQuad(float t)
+        {
+            return t * t;
+        }
+        public static float EaseInExpo(float t)
+        {
+            return t == 0 ? 0 : MathF.Pow(2, 10 * t - 10);
+        }
         public static float EaseInOutCirc(float t)
         {
             return MathF.Sqrt(1 - MathF.Pow(t - 1, 2));
         }
-        public static float EaseInOutEtpo(float t)
+        public static float EaseInOutExpo(float t)
         {
             return t == 0
               ? 0
@@ -20,6 +28,10 @@ namespace Utility
         public static float EaseInOutQuad(float t)
         {
             return t < 0.5f ? 2 * t * t : 1 - MathF.Pow(-2 * t + 2, 2) / 2;
+        }
+        public static float EaseOutCubic(float t)
+        {
+            return 1 - MathF.Pow(1 - t, 3);
         }
         public static float EaseOutBounce(float t)
         {

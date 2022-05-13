@@ -29,7 +29,7 @@ public class Card : MonoBehaviour
     /// <summary>
     /// Offset towards the bottom of the screen from the stacked parent's position.
     /// </summary>
-    public const float StackYOffset = 0.25f;
+    public float StackYOffset { get; protected set; } = 0.25f;
     #endregion
 
     public Moveable MoveComponent { get; private set; }
@@ -48,6 +48,19 @@ public class Card : MonoBehaviour
     public string CardName { get => Data.Name; }
     public CardData Data { get; protected set; }
 
+    private int _Quantity;
+    public int Quantity { get => _Quantity;
+        set
+        {
+            if (value == 1) _QuantityText.text = "";
+            else _QuantityText.text = $"x{value}";
+            _Quantity = value;
+        }
+    }
+
+    public Card MultiCard { get; private set; } = null;
+    public Card MultiCardTail { get; set; } = null;
+
     [Header("UI references")]
     [SerializeField]
     private GameObject _ProgressBarPrefab;
@@ -56,6 +69,8 @@ public class Card : MonoBehaviour
     [SerializeField]
     private TextMeshProUGUI _NameText;
     [SerializeField]
+    private TextMeshProUGUI _QuantityText;
+    [SerializeField]
     private RawImage _CardImage;
     [SerializeField]
     private Canvas _CardInfo;
@@ -63,6 +78,8 @@ public class Card : MonoBehaviour
     [Header("Component references")]
     [SerializeField]
     private Collider _Collider;
+    [SerializeField]
+    private MeshRenderer _Renderer;
 
     #region Initialisation
     private void Awake()
@@ -75,8 +92,10 @@ public class Card : MonoBehaviour
         StackNode = new StackNode();
         new Stack(this);
 
-        _DragComponent.OnStartDrag += OnPickup;
-        _DragComponent.OnEndDrag += OnDrop;
+        _DragComponent.DragStarted += OnPickup;
+        _DragComponent.DragEnded += OnDrop;
+        _DragComponent.PointerDownCallback = OnPointerDown;
+        _DragComponent.PointerUpCallback = OnPointerUp;
     }
 
     public void Initialise(CardData data)
@@ -85,6 +104,7 @@ public class Card : MonoBehaviour
         _NameText.text = Data.Name;
         _CardImage.texture = Data.Image;
         _Interactor = new Interactor(this);
+        Quantity = 1;
     }
 
     #endregion
@@ -121,19 +141,63 @@ public class Card : MonoBehaviour
         _DragComponent.enabled = isDraggable;
     }
 
+    public void SetActive(bool isActive)
+    {
+        _Collider.enabled = isActive;
+        _Renderer.enabled = isActive;
+        _CardInfo.enabled = isActive;
+    }
+
+    public bool IsSameType(Card other)
+    {
+        return CardName == other?.CardName;
+    }
+    public bool IsCard(string cardName)
+    {
+        return CardName == cardName;
+    }
+
+    protected void OnPointerDown(PointerEventData eventData)
+    {
+        if (Quantity == 1 || CardHoverManager.CursorQuantity == 0)
+        {
+            _DragComponent.StartDrag(eventData);
+            return;
+        }
+
+        Card splitHead = Stack.GetMultiChild(this, Quantity - CardHoverManager.CursorQuantity);
+        splitHead.StartDrag(eventData);
+        _PointerUpRedirect = splitHead.StopDrag;
+    }
+
+    private Action<PointerEventData> _PointerUpRedirect;
+
+    protected void OnPointerUp(PointerEventData eventData)
+    {
+        if (_PointerUpRedirect != null)
+        {
+            _PointerUpRedirect(eventData);
+            _PointerUpRedirect = null;
+            return;
+        }
+        _DragComponent.StopDrag(eventData);
+    }
+
     public void CreateCard(string cardName, Vector3 position = default, Vector3 moveOffset = default)
     {
         bool isStack = CheckForStackUnder(position + moveOffset + new Vector3(0,0,-PickupHeight), out Stack other);
         Card card = CardManager.SpawnCard(cardName, position);
         // TODO: Implement output waypoints
+        Moveable.EasingOverride = Easings.EaseOutCubic;
         if (isStack)
         {
             card.StackOn(other);
         }
         else if (moveOffset != default)
         {
-            _ = card.MoveComponent.MoveTo(card.transform.position + moveOffset, null, Easings.EaseInOutCirc);
+            _ = card.MoveComponent.MoveTo(card.transform.position + moveOffset);
         }
+        Moveable.EasingOverride = null;
     }
 
     public bool HasChildCards(string cardName, int quantity, ref List<Card> cards)
@@ -145,7 +209,7 @@ public class Card : MonoBehaviour
 
         foreach(Card child in StackNode.Stack.EnumeratorFrom(StackNode.Node))
         {
-            if (child.Data.Name == cardName)
+            if (child.IsCard(cardName))
             {
                 cards.Add(child);
                 quantity--;
@@ -164,7 +228,7 @@ public class Card : MonoBehaviour
 
         foreach(Card parent in StackNode.Stack.ReverseEnumeratorFrom(StackNode.Node))
         {
-            if (parent.Data.Name == cardName)
+            if (parent.IsCard(cardName))
             {
                 cards.Add(parent);
                 quantity--;
@@ -210,9 +274,22 @@ public class Card : MonoBehaviour
         other.Concat(StackNode.Stack);
         transform.SetParent(StackNode.Previous.Value.transform);
         CardInfo.sortingOrder = StackNode.Previous.Value.CardInfo.sortingOrder + 1;
-        MoveToStackedCard();
-        
+        //MoveToStackedCard();
     }
+
+    public void MultiCardStack(Card multi)
+    {
+        MultiCard = multi;
+        SetDraggable(false);
+        MoveToMultiStack();
+    }
+    public void MultiCardUnstack()
+    {
+        MultiCard = null;
+        SetDraggable(true);
+        SetActive(true);
+    }
+    
     #endregion
 
     /// <summary>
@@ -220,7 +297,29 @@ public class Card : MonoBehaviour
     /// </summary>
     public void MoveToStackedCard()
     {
-        _ = MoveComponent.MoveTo(StackNode.Previous.Value.transform, new Vector3(0, -StackYOffset, -StackZOffset));
+        Vector3 offset = new Vector3(0, -StackYOffset, -StackZOffset);
+        if (StackNode.Previous.Value.MultiCard != null) offset.y *= 2;
+        MoveToStackedCard(offset);
+    }
+    public void MoveToStackedCard(Vector3 offset)
+    {
+        _ = MoveComponent.MoveTo(StackNode.Previous.Value.transform, offset);
+    }
+
+    public void MoveToMultiStack()
+    {
+        if (MultiCard == null) throw new InvalidOperationException("MultiCard cannot be null.");
+        _ = MoveComponent.MoveTo(StackNode.Previous.Value.transform, () => SetActive(false));
+    }
+
+    public void StartDrag(PointerEventData eventData)
+    {
+        _DragComponent.StartDrag(eventData);
+    }
+
+    public void StopDrag(PointerEventData eventData)
+    {
+        _DragComponent.StopDrag(eventData);
     }
 
     /// <summary>
