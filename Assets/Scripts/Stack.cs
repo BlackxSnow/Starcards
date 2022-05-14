@@ -167,15 +167,27 @@ public class Stack
         var parentNode = toExtract.Previous;
         var childNode = toExtract.Next;
 
+        if (toExtract.Node.Value.MultiCard != null)
+        {
+            Card extractCard = toExtract.Node.Value;
+            extractCard.MultiCard.Quantity--;
+            if (extractCard == extractCard.MultiCard.MultiCardTail)
+            {
+                extractCard.MultiCard.MultiCardTail = extractCard.MultiCard.Quantity > 1 ? parentNode.Value : null;
+            }
+            toExtract.Node.Value.MultiCardUnstack();
+        }
         Cards.Remove(toExtract.Node);
         new Stack(toExtract.Node.Value);
         if (childNode != null)
         {
             childNode.Value.transform.SetParent(parentNode != null ? parentNode.Value.transform : GameManager.CardContainer);
-            childNode.Value.MoveToStackedCard();
+            if (childNode.Value.MultiCard == null)
+            {
+                childNode.Value.MoveToStackedCard();
+            }
         }
     }
-
     public IEnumerator<Card> EnumeratorFrom(ImprovedLinkedListNode<Card> start) => Cards.GetEnumerator(start);
     public IEnumerator<Card> ReverseEnumeratorFrom(ImprovedLinkedListNode<Card> start) => Cards.GetReverseEnumerator(start);
 

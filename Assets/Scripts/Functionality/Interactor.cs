@@ -207,7 +207,7 @@ namespace Interactions
         public void OnCardChange(Card card, uint interactionID)
         {
             Debug.Assert(State != InteractorState.None, "OnCardChange called while interactor was disabled.");
-            if (!card.HasParentCard(AttachedCard))
+            if (!card.InSameStack(AttachedCard))
             {
                 InteractionProcess process = Processes[interactionID];
                 if (process.Data.IsValidForRun(AttachedCard, out Card[] required, out Card[] consumed))

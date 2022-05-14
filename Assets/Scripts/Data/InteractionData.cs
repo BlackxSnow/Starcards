@@ -35,35 +35,35 @@ namespace Data
         /// </summary>
         public int Priority = 0;
 
+        public bool TryFulfillCards(Card requester, List<CardRef> toFulfill, out List<Card> fulfilled)
+        {
+            Dictionary<string, int> requests = toFulfill.ToDictionary((r) => r.CardName, (r) => r.Quantity);
+            fulfilled = new List<Card>();
+
+            Card current = requester.GetNextMajor();
+            while (requests.Count > 0 && current != null)
+            {
+                fulfilled.AddRange(current.RequestCards(ref requests));
+                current = current.GetNextMajor();
+            }
+
+            return requests.Count == 0;
+        }
+
         public bool IsValidForRun(Card card, out Card[] required, out Card[] consumed)
         {
             // TODO: Implement range in cardRefs
-
-            List<Card> req = new List<Card>();
-            List<Card> con = new List<Card>();
-
             required = null;
             consumed = null;
 
-            foreach (CardRef cardRef in Require)
+            if (TryFulfillCards(card, Require, out var req) && TryFulfillCards(card, Consume, out var con))
             {
-                if (!card.HasChildCards(cardRef.CardName, cardRef.Quantity, ref req))
-                {
-                    return false;
-                }
+                required = req.ToArray();
+                consumed = con.ToArray();
+                return true;
             }
 
-            foreach (CardRef cardRef in Consume)
-            {
-                if (!card.HasChildCards(cardRef.CardName, cardRef.Quantity, ref con))
-                {
-                    return false;
-                }
-            }
-
-            required = req.ToArray();
-            consumed = con.ToArray();
-            return true;
+            return false;
         }
         public InteractionData()
         {

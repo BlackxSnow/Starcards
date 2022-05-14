@@ -115,6 +115,29 @@ public class Card : MonoBehaviour
     }
 
     /// <summary>
+    /// Return next card that is not a multicard child.
+    /// </summary>
+    /// <returns></returns>
+    public Card GetNextMajor()
+    {
+        if (MultiCardTail != null) return MultiCardTail.StackNode.Next?.Value;
+        if (MultiCard != null) return MultiCard.GetNextMajor();
+        return StackNode.Next?.Value;
+    }
+
+    public Card[] GetChildren(int quantity, bool includeSelf = false)
+    {
+        List<Card> children = new List<Card>(quantity);
+
+        foreach (Card child in StackNode.Stack.EnumeratorFrom(includeSelf ? StackNode.Node : StackNode.Next))
+        {
+            children.Add(child);
+            if (children.Count == quantity) return children.ToArray();
+        }
+        throw new ArgumentOutOfRangeException($"Expected {quantity} children, got {children.Count}. First: {children[0].name}, Last: {children[children.Count - 1].name}");
+    }
+
+    /// <summary>
     /// Return a progress bar attached to this card.
     /// </summary>
     /// <returns></returns>
@@ -127,6 +150,7 @@ public class Card : MonoBehaviour
     {
         SetDraggable(false);
         SetInteractable(Interactor.InteractorState.None);
+        SetActive(true);
         IsBeingDestroyed = true;
     }
 
@@ -156,6 +180,10 @@ public class Card : MonoBehaviour
     {
         return CardName == cardName;
     }
+    public bool InSameStack(Card other)
+    {
+        return StackNode.Stack == other.StackNode.Stack;
+    }
 
     protected void OnPointerDown(PointerEventData eventData)
     {
@@ -181,6 +209,24 @@ public class Card : MonoBehaviour
             return;
         }
         _DragComponent.StopDrag(eventData);
+    }
+
+    public Card[] RequestCards(ref Dictionary<string, int> request)
+    {
+        if (request.TryGetValue(CardName, out int requestQuantity))
+        {
+            if (Quantity >= requestQuantity)
+            {
+                request.Remove(CardName);
+                return GetChildren(requestQuantity, Quantity == requestQuantity);
+            }
+            else
+            {
+                request[CardName] -= Quantity;
+                return GetChildren(Quantity, true);
+            }
+        }
+        return new Card[0];
     }
 
     public void CreateCard(string cardName, Vector3 position = default, Vector3 moveOffset = default)

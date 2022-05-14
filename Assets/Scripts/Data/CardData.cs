@@ -14,7 +14,6 @@ namespace Data
     {
         public string CardName;
         public int Quantity;
-
     }
 
 
@@ -30,8 +29,6 @@ namespace Data
         public string Name;
         public Texture2D Image;
 
-        //public Dictionary<string, List<InteractionData>> OnStack = new Dictionary<string, List<InteractionData>>();
-        //public Dictionary<string, List<InteractionData>> OnTick = new Dictionary<string, List<InteractionData>>();
         public List<InteractionData> OnStack = new List<InteractionData>();
         public List<InteractionData> OnTick = new List<InteractionData>();
     }
