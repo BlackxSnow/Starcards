@@ -274,6 +274,11 @@ public class Card : MonoBehaviour
         other.Concat(StackNode.Stack);
         transform.SetParent(StackNode.Previous.Value.transform);
         CardInfo.sortingOrder = StackNode.Previous.Value.CardInfo.sortingOrder + 1;
+
+        foreach (Card card in StackNode.Stack.EnumeratorFrom(StackNode.Next))
+        {
+            card.CardInfo.sortingOrder = card.StackNode.Previous.Value.CardInfo.sortingOrder + 1;
+        }
         //MoveToStackedCard();
     }
 
